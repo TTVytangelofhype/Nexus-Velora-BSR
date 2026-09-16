@@ -1,0 +1,20 @@
+{
+  "veloraChannel": "ttvytangelofhype",
+  "beatSaberVersion": "1.42.1",
+  "requestsOpen": true,
+  "maxQueueSize": 50,
+  "maxRequestsPerUser": 2,
+  "allowSongNameSearch": true,
+  "autoDownload": false,
+  "maxSongLengthSeconds": 600,
+  "commands": {
+    "request": "!bsr",
+    "queue": "!queue",
+    "undo": "!oops",
+    "help": "!bsrhelp"
+  },
+  "obs": {
+    "enabled": true,
+    "port": 24842
+  }
+}
