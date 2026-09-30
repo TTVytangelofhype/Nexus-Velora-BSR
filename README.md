@@ -49,3 +49,21 @@ Requirements: .NET 8 SDK during development.
 4. Check `/api/queue` on the local bridge to confirm the request was accepted.
 
 The listener primes its message watermark on startup so old chat commands are not replayed into a fresh queue.
+
+
+## Multi-version Beat Saber support
+
+NEXUS keeps the Velora/BeatSaver bridge version-independent and builds the in-game adapter against each selected Beat Saber installation.
+
+Validated profiles are stored in `config/beatsaber-profiles.json`.
+
+- `stable-1.42.1` preserves the Beat Saber 1.42.1 target.
+- `latest` is the separately maintained current-PC target.
+
+### Guarded installer
+
+Run `scripts/install-nexus-bsr.bat` and paste the Beat Saber installation folder. NEXUS detects the installed game version before compiling or copying the adapter.
+
+If the detected version has no validated profile, installation stops and existing plugin files are left unchanged. This is intentional: a future Beat Saber update must be validated before NEXUS marks it supported.
+
+Version-specific build artifacts are retained under `dist/plugins/<profile>/`.
