@@ -1,6 +1,7 @@
 using NexusVeloraBSR.Core.BeatSaver;
 using NexusVeloraBSR.Core.Queue;
 using NexusVeloraBSR.Core.Velora;
+using NexusVeloraBSR.Bridge;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://127.0.0.1:24842");
@@ -8,6 +9,13 @@ builder.WebHost.UseUrls("http://127.0.0.1:24842");
 builder.Services.AddSingleton<RequestQueue>();
 builder.Services.AddSingleton<BeatSaverClient>();
 builder.Services.AddSingleton<VeloraCommandRouter>();
+builder.Services.AddHttpClient("velora", client =>
+{
+    client.BaseAddress = new Uri("https://api.velora.tv/");
+    client.Timeout = TimeSpan.FromSeconds(10);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("NexusVeloraBSR/0.1.0");
+});
+builder.Services.AddHostedService<VeloraChatListener>();
 
 var app = builder.Build();
 
