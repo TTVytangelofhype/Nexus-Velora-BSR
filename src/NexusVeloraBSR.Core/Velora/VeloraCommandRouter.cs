@@ -4,6 +4,7 @@ using NexusVeloraBSR.Core.Commands;
 using NexusVeloraBSR.Core.Models;
 using NexusVeloraBSR.Core.Queue;
 using NexusVeloraBSR.Core.BeatSaver;
+using System.Threading;
 
 namespace NexusVeloraBSR.Core.Velora
 {
@@ -11,11 +12,13 @@ namespace NexusVeloraBSR.Core.Velora
     {
         private readonly RequestQueue _queue;
         private readonly BeatSaverClient _beatSaver;
+        private readonly IAcceptedMapHandler? _acceptedMapHandler;
 
-        public VeloraCommandRouter(RequestQueue queue, BeatSaverClient beatSaver)
+        public VeloraCommandRouter(RequestQueue queue, BeatSaverClient beatSaver, IAcceptedMapHandler? acceptedMapHandler = null)
         {
             _queue = queue;
             _beatSaver = beatSaver;
+            _acceptedMapHandler = acceptedMapHandler;
         }
 
         public async Task<string?> HandleAsync(VeloraChatMessage chat)
@@ -38,7 +41,19 @@ namespace NexusVeloraBSR.Core.Velora
                         Requester = chat.UserName,
                         RequestedAtUtc = DateTime.UtcNow
                     };
-                    _queue.TryAdd(request, out var result);
+                    var accepted = _queue.TryAdd(request, out var result);
+                    if (accepted && _acceptedMapHandler != null)
+                    {
+                        try
+                        {
+                            await _acceptedMapHandler.HandleAcceptedAsync(map).ConfigureAwait(false);
+                            result += " Map installed; Beat Saber refresh queued.";
+                        }
+                        catch (Exception ex)
+                        {
+                            result += " Map accepted, but automatic install failed: " + ex.Message;
+                        }
+                    }
                     return result;
 
                 case CommandType.Queue:
