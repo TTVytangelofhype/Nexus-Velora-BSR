@@ -1,0 +1,18 @@
+{
+  "profiles": [
+    {
+      "id": "stable-1.42.1",
+      "label": "Beat Saber 1.42.1 (Stable)",
+      "gameVersion": "1.42.1",
+      "channel": "stable",
+      "notes": "Preserved compatibility target. Build against the BSIPA and SongCore DLLs installed in the 1.42.1 game folder."
+    },
+    {
+      "id": "latest",
+      "label": "Beat Saber Latest",
+      "gameVersion": "1.45.2",
+      "channel": "latest",
+      "notes": "Current PC target as of 2026-09-30. Build against the BSIPA and SongCore DLLs installed in the latest game folder."
+    }
+  ]
+}
