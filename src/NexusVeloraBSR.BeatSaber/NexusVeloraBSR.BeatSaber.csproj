@@ -1,5 +1,5 @@
 <Project Sdk="Microsoft.NET.Sdk">
-  <PropertyGroup><TargetFramework>net472</TargetFramework><LangVersion>latest</LangVersion><Nullable>enable</Nullable><AssemblyName>NexusVeloraBSR.BeatSaber</AssemblyName></PropertyGroup>
+  <PropertyGroup><TargetFramework>net472</TargetFramework><LangVersion>latest</LangVersion><Nullable>enable</Nullable><AssemblyName>NexusVeloraBSR.BeatSaber</AssemblyName><NexusGameVersion Condition="'$(NexusGameVersion)'==''">unknown</NexusGameVersion><DefineConstants>$(DefineConstants);NEXUS_MULTIVERSION</DefineConstants></PropertyGroup>
   <PropertyGroup Condition="'$(BeatSaberDir)'==''"><BeatSaberDir>$(BEAT_SABER_DIR)</BeatSaberDir></PropertyGroup>
   <PropertyGroup Condition="'$(IpaDll)'==''"><IpaDll>$(BeatSaberDir)\Beat Saber_Data\Managed\IPA.dll</IpaDll></PropertyGroup>
   <ItemGroup>
