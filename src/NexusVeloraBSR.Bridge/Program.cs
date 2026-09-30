@@ -28,6 +28,12 @@ builder.Services.AddHttpClient("beatsaver-download", client =>
 
 var app = builder.Build();
 
+var queueSettings = app.Configuration.GetSection("NexusVeloraBSR");
+var requestQueue = app.Services.GetRequiredService<RequestQueue>();
+requestQueue.MaxRequestsPerUser = queueSettings.GetValue("MaxRequestsPerUser", 2);
+requestQueue.MaxQueueSize = queueSettings.GetValue("MaxQueueSize", 50);
+if (!queueSettings.GetValue("RequestsOpen", true)) requestQueue.Close();
+
 app.MapGet("/", () => Results.Ok(new
 {
     name = "NEXUS Velora BSR",
@@ -70,7 +76,8 @@ app.MapPost("/api/install/{key}", async (string key, BeatSaverClient beatSaver, 
     try
     {
         var path = await installer.InstallAsync(map, ct);
-        return Results.Ok(new { installed = true, map = map.Name, key = map.Key, path, refresh = "Press R in Beat Saber's main menu to quick-refresh SongCore." });
+        var generation = refreshState.MarkMapInstalled();
+        return Results.Ok(new { installed = true, map = map.Name, key = map.Key, path, refreshGeneration = generation });
     }
     catch (Exception ex)
     {
