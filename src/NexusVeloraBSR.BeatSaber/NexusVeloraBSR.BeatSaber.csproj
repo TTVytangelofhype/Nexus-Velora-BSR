@@ -1,8 +1,9 @@
 <Project Sdk="Microsoft.NET.Sdk">
   <PropertyGroup><TargetFramework>net472</TargetFramework><LangVersion>latest</LangVersion><Nullable>enable</Nullable><AssemblyName>NexusVeloraBSR.BeatSaber</AssemblyName></PropertyGroup>
   <PropertyGroup Condition="'$(BeatSaberDir)'==''"><BeatSaberDir>$(BEAT_SABER_DIR)</BeatSaberDir></PropertyGroup>
+  <PropertyGroup Condition="'$(IpaDll)'==''"><IpaDll>$(BeatSaberDir)\Beat Saber_Data\Managed\IPA.dll</IpaDll></PropertyGroup>
   <ItemGroup>
-    <Reference Include="IPA"><HintPath>$(BeatSaberDir)\Beat Saber_Data\Managed\IPA.dll</HintPath><Private>false</Private></Reference>
+    <Reference Include="IPA"><HintPath>$(IpaDll)</HintPath><Private>false</Private></Reference>
     <Reference Include="SongCore"><HintPath>$(BeatSaberDir)\Plugins\SongCore.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 </Project>
