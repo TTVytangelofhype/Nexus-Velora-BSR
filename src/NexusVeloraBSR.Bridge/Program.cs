@@ -16,6 +16,12 @@ builder.Services.AddHttpClient("velora", client =>
     client.DefaultRequestHeaders.UserAgent.ParseAdd("NexusVeloraBSR/0.1.0");
 });
 builder.Services.AddHostedService<VeloraChatListener>();
+builder.Services.AddSingleton<BeatSaberMapInstaller>();
+builder.Services.AddHttpClient("beatsaver-download", client =>
+{
+    client.Timeout = TimeSpan.FromSeconds(60);
+    client.DefaultRequestHeaders.UserAgent.ParseAdd("NexusVeloraBSR/0.1.0");
+});
 
 var app = builder.Build();
 
@@ -37,6 +43,29 @@ app.MapGet("/api/status", (RequestQueue queue) => Results.Ok(new
 }));
 
 app.MapGet("/api/queue", (RequestQueue queue) => Results.Ok(queue.Items));
+
+app.MapGet("/api/beatsaber", (BeatSaberMapInstaller installer) =>
+{
+    var path = installer.FindBeatSaberPath();
+    return Results.Ok(new { detected = path != null, path });
+});
+
+app.MapPost("/api/install/{key}", async (string key, BeatSaverClient beatSaver, BeatSaberMapInstaller installer, CancellationToken ct) =>
+{
+    var map = await beatSaver.ResolveAsync(key, ct);
+    if (map == null || !string.Equals(map.Key, key, StringComparison.OrdinalIgnoreCase))
+        return Results.NotFound(new { error = "BeatSaver map not found." });
+
+    try
+    {
+        var path = await installer.InstallAsync(map, ct);
+        return Results.Ok(new { installed = true, map = map.Name, key = map.Key, path, refresh = "Press R in Beat Saber's main menu to quick-refresh SongCore." });
+    }
+    catch (Exception ex)
+    {
+        return Results.BadRequest(new { installed = false, error = ex.Message });
+    }
+});
 
 app.MapPost("/api/chat", async (VeloraChatMessage message, VeloraCommandRouter router) =>
 {
