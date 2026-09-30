@@ -42,6 +42,17 @@ namespace NexusVeloraBSR.Core.BeatSaver
         public List<BeatSaverMap> Docs { get; set; } = new List<BeatSaverMap>();
     }
 
+    public sealed class ResolvedBeatSaverMap
+    {
+        public string Key { get; set; } = string.Empty;
+        public string Name { get; set; } = string.Empty;
+        public string SongAuthor { get; set; } = string.Empty;
+        public string Mapper { get; set; } = string.Empty;
+        public double Bpm { get; set; }
+        public int DurationSeconds { get; set; }
+        public Uri? DownloadUri { get; set; }
+    }
+
     public sealed class BeatSaverClient : IDisposable
     {
         private readonly HttpClient _http;
@@ -74,6 +85,35 @@ namespace NexusVeloraBSR.Core.BeatSaver
             using var stream = await response.Content.ReadAsStreamAsync().ConfigureAwait(false);
             var result = await JsonSerializer.DeserializeAsync<BeatSaverSearchResult>(stream, _json, cancellationToken).ConfigureAwait(false);
             return result?.Docs ?? (IReadOnlyList<BeatSaverMap>)Array.Empty<BeatSaverMap>();
+        }
+
+        public async Task<ResolvedBeatSaverMap?> ResolveAsync(string input, CancellationToken cancellationToken = default)
+        {
+            if (string.IsNullOrWhiteSpace(input)) return null;
+            var trimmed = input.Trim();
+            BeatSaverMap? map = null;
+
+            // BeatSaver keys are short hexadecimal IDs. Try an exact lookup first.
+            if (System.Text.RegularExpressions.Regex.IsMatch(trimmed, "^[0-9a-fA-F]+$"))
+                map = await GetByKeyAsync(trimmed, cancellationToken).ConfigureAwait(false);
+
+            if (map == null)
+            {
+                var results = await SearchAsync(trimmed, cancellationToken).ConfigureAwait(false);
+                if (results.Count > 0) map = results[0];
+            }
+
+            if (map == null) return null;
+            return new ResolvedBeatSaverMap
+            {
+                Key = map.Id,
+                Name = string.IsNullOrWhiteSpace(map.Metadata.SongName) ? map.Name : map.Metadata.SongName,
+                SongAuthor = map.Metadata.SongAuthorName,
+                Mapper = string.IsNullOrWhiteSpace(map.Metadata.LevelAuthorName) ? map.Uploader.Name : map.Metadata.LevelAuthorName,
+                Bpm = map.Metadata.Bpm,
+                DurationSeconds = map.Metadata.Duration,
+                DownloadUri = GetLatestDownloadUri(map)
+            };
         }
 
         public Uri? GetLatestDownloadUri(BeatSaverMap map)
