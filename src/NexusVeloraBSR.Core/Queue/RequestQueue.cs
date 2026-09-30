@@ -10,6 +10,7 @@ namespace NexusVeloraBSR.Core.Queue
         private readonly List<SongRequest> _items = new List<SongRequest>();
         public bool IsOpen { get; private set; } = true;
         public int MaxRequestsPerUser { get; set; } = 2;
+        public int MaxQueueSize { get; set; } = 50;
         public IReadOnlyList<SongRequest> Items => _items.AsReadOnly();
 
         public void Open() => IsOpen = true;
@@ -19,6 +20,7 @@ namespace NexusVeloraBSR.Core.Queue
         public bool TryAdd(SongRequest request, out string message)
         {
             if (!IsOpen) { message = "Song requests are currently closed."; return false; }
+            if (_items.Count >= MaxQueueSize) { message = "The NEXUS BSR queue is full."; return false; }
             if (_items.Any(x => string.Equals(x.BeatSaverKey, request.BeatSaverKey, StringComparison.OrdinalIgnoreCase))) { message = "That map is already in the queue."; return false; }
             if (_items.Count(x => string.Equals(x.Requester, request.Requester, StringComparison.OrdinalIgnoreCase)) >= MaxRequestsPerUser) { message = $"{request.Requester} has reached the request limit."; return false; }
             _items.Add(request);
