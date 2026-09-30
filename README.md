@@ -35,3 +35,17 @@ Next development stages are the BeatSaver client, Velora chat connector, local b
 ## Safety defaults
 
 Automatic map downloads are disabled in the example configuration. Request validation, queue limits, blacklist support, and moderator-only administrative commands will be enforced before the first usable release.
+
+
+## Running the bridge (development)
+
+NEXUS Velora BSR now includes a self-contained Windows/.NET bridge. It polls new Velora chat messages for the configured channel and routes commands into the BeatSaver-backed request queue.
+
+Requirements: .NET 8 SDK during development.
+
+1. Run `scripts/run-bridge.bat`.
+2. Wait for the console to report that the Velora listener is connected.
+3. Send a new `!bsr <BeatSaver ID>` message in the configured Velora channel.
+4. Check `/api/queue` on the local bridge to confirm the request was accepted.
+
+The listener primes its message watermark on startup so old chat commands are not replayed into a fresh queue.
