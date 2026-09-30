@@ -1,3 +1,4 @@
+using NexusVeloraBSR.Core;
 using NexusVeloraBSR.Core.BeatSaver;
 using NexusVeloraBSR.Core.Queue;
 using NexusVeloraBSR.Core.Velora;
@@ -9,6 +10,7 @@ builder.WebHost.UseUrls("http://127.0.0.1:24842");
 builder.Services.AddSingleton<RequestQueue>();
 builder.Services.AddSingleton<BeatSaverClient>();
 builder.Services.AddSingleton<VeloraCommandRouter>();
+builder.Services.AddSingleton<IAcceptedMapHandler, AcceptedMapHandler>();
 builder.Services.AddHttpClient("velora", client =>
 {
     client.BaseAddress = new Uri("https://api.velora.tv/");
