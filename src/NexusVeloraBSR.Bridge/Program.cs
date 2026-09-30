@@ -17,6 +17,7 @@ builder.Services.AddHttpClient("velora", client =>
 });
 builder.Services.AddHostedService<VeloraChatListener>();
 builder.Services.AddSingleton<BeatSaberMapInstaller>();
+builder.Services.AddSingleton<GameRefreshState>();
 builder.Services.AddHttpClient("beatsaver-download", client =>
 {
     client.Timeout = TimeSpan.FromSeconds(60);
@@ -50,7 +51,15 @@ app.MapGet("/api/beatsaber", (BeatSaberMapInstaller installer) =>
     return Results.Ok(new { detected = path != null, path });
 });
 
-app.MapPost("/api/install/{key}", async (string key, BeatSaverClient beatSaver, BeatSaberMapInstaller installer, CancellationToken ct) =>
+app.MapGet("/api/game/pending", (GameRefreshState state) => Results.Ok(new { pending = state.Pending, generation = state.Generation }));
+
+app.MapPost("/api/game/refreshed/{generation:long}", (long generation, GameRefreshState state) =>
+{
+    state.Acknowledge(generation);
+    return Results.Ok(new { acknowledged = generation });
+});
+
+app.MapPost("/api/install/{key}", async (string key, BeatSaverClient beatSaver, BeatSaberMapInstaller installer, GameRefreshState refreshState, CancellationToken ct) =>
 {
     var map = await beatSaver.ResolveAsync(key, ct);
     if (map == null || !string.Equals(map.Key, key, StringComparison.OrdinalIgnoreCase))
