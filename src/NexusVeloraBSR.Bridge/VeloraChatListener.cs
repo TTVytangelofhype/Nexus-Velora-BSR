@@ -23,7 +23,28 @@ public sealed class VeloraChatListener : BackgroundService
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        var channel = _config["NexusVeloraBSR:Channel"] ?? "ttvytangelofhype";
+        var channel = (_config["NexusVeloraBSR:Channel"] ?? string.Empty).Trim();
+        if (string.IsNullOrWhiteSpace(channel) ||
+            channel.Equals("YOUR_VELORA_CHANNEL_NAME", StringComparison.OrdinalIgnoreCase) ||
+            channel.Equals("YOUR_CHANNEL_NAME", StringComparison.OrdinalIgnoreCase))
+        {
+            _log.LogError("SETUP REQUIRED: Velora channel is still an example placeholder. Edit appsettings.json at your own risk, keep a backup, and replace YOUR_VELORA_CHANNEL_NAME with your own Velora channel name. NEXUS will not connect to Velora until configured.");
+            return;
+        }
+
+        if (Uri.TryCreate(channel, UriKind.Absolute, out var channelUri) &&
+            channelUri.Host.Equals("velora.tv", StringComparison.OrdinalIgnoreCase))
+        {
+            channel = channelUri.AbsolutePath.Trim('/');
+        }
+
+        if (channel.Contains('/')) channel = channel.Split('/').Last();
+        if (string.IsNullOrWhiteSpace(channel))
+        {
+            _log.LogError("SETUP REQUIRED: The configured Velora channel is invalid.");
+            return;
+        }
+
         _log.LogInformation("Velora listener starting for {Channel}", channel);
 
         while (!stoppingToken.IsCancellationRequested)
