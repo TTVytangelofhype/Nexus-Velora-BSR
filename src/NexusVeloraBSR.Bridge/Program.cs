@@ -30,6 +30,9 @@ var app = builder.Build();
 
 var queueSettings = app.Configuration.GetSection("NexusVeloraBSR");
 var requestQueue = app.Services.GetRequiredService<RequestQueue>();
+var configuredChannel = (queueSettings["Channel"] ?? string.Empty).Trim();
+var configuredBeatSaberVersion = (queueSettings["BeatSaberVersion"] ?? "AUTO").Trim();
+var displayChannel = string.IsNullOrWhiteSpace(configuredChannel) ? "NOT CONFIGURED" : configuredChannel;
 requestQueue.MaxRequestsPerUser = queueSettings.GetValue("MaxRequestsPerUser", 2);
 requestQueue.MaxQueueSize = queueSettings.GetValue("MaxQueueSize", 50);
 if (!queueSettings.GetValue("RequestsOpen", true)) requestQueue.Close();
@@ -39,8 +42,8 @@ app.MapGet("/", () => Results.Ok(new
     name = "NEXUS Velora BSR",
     version = "0.1.0",
     status = "online",
-    channel = "ttvytangelofhype",
-    beatSaber = "1.42.1"
+    channel = displayChannel,
+    beatSaber = configuredBeatSaberVersion
 }));
 
 app.MapGet("/api/status", (RequestQueue queue) => Results.Ok(new
@@ -48,7 +51,7 @@ app.MapGet("/api/status", (RequestQueue queue) => Results.Ok(new
     status = "online",
     requestsOpen = queue.IsOpen,
     queueCount = queue.Items.Count,
-    channel = "ttvytangelofhype"
+    channel = displayChannel
 }));
 
 app.MapGet("/api/queue", (RequestQueue queue) => Results.Ok(queue.Items));
@@ -97,10 +100,10 @@ app.MapPost("/api/chat", async (VeloraChatMessage message, VeloraCommandRouter r
 Console.WriteLine("==========================================");
 Console.WriteLine("       NEXUS VELORA BSR v0.1.0");
 Console.WriteLine("==========================================");
-Console.WriteLine("Channel:     ttvytangelofhype");
-Console.WriteLine("Beat Saber:  1.42.1");
+Console.WriteLine($"Channel:     {displayChannel}");
+Console.WriteLine($"Beat Saber:  {configuredBeatSaberVersion}");
 Console.WriteLine("Bridge:      http://127.0.0.1:24842");
-Console.WriteLine("Requests:    OPEN");
+Console.WriteLine($"Requests:    {(requestQueue.IsOpen ? "OPEN" : "CLOSED")}");
 Console.WriteLine("==========================================");
 Console.WriteLine("Waiting for Velora chat requests...");
 
