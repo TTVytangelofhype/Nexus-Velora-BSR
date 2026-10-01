@@ -36,11 +36,17 @@ namespace NexusVeloraBSR.BeatSaber
         {
             using var client = new HttpClient { BaseAddress = new Uri("http://127.0.0.1:24842/"), Timeout = TimeSpan.FromSeconds(3) };
             var lastGeneration = -1L;
+            var bridgeConnected = false;
             while (!ct.IsCancellationRequested)
             {
                 try
                 {
                     var raw = await client.GetStringAsync("api/game/pending");
+                    if (!bridgeConnected)
+                    {
+                        Log?.Info("NEXUS bridge connected.");
+                        bridgeConnected = true;
+                    }
                     var state = PendingRefresh.Parse(raw);
                     if (state.Pending && state.Generation != lastGeneration)
                     {
@@ -50,7 +56,14 @@ namespace NexusVeloraBSR.BeatSaber
                         await client.PostAsync("api/game/refreshed/" + state.Generation, null);
                     }
                 }
-                catch (Exception ex) { Log?.Debug("NEXUS bridge unavailable: " + ex.Message); }
+                catch (Exception ex)
+                {
+                    if (bridgeConnected)
+                    {
+                        Log?.Warn("NEXUS bridge disconnected; waiting for it to return. " + ex.Message);
+                        bridgeConnected = false;
+                    }
+                }
                 try { await Task.Delay(1500, ct); } catch (TaskCanceledException) { }
             }
         }
