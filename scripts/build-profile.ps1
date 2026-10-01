@@ -44,12 +44,12 @@ try {
   throw "Could not inspect the compiled adapter DLL: $($_.Exception.Message)"
 }
 Write-Host "Embedded resources: $($resources -join ', ')"
-if($resources -notcontains "manifest.json"){
-  Write-Host "[FAIL] BSIPA manifest is not embedded as manifest.json."
+if(-not ($resources | Where-Object { $_ -eq "manifest.json" -or $_ -like "*.manifest.json" })){
+  Write-Host "[FAIL] BSIPA manifest resource was not found in the compiled adapter."
   Write-Host "       Beat Saber was not changed."
   exit 20
 }
-Write-Host "[ OK ] BSIPA manifest verified inside compiled DLL."
+Write-Host "[ OK ] BSIPA manifest resource verified inside compiled DLL."
 
 $versioned=Join-Path $out ("NexusVeloraBSR.BeatSaber-"+$p.gameVersion+".dll")
 Copy-Item $built $versioned -Force
