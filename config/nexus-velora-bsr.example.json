@@ -1,11 +1,14 @@
 {
-  "veloraChannel": "ttvytangelofhype",
-  "beatSaberVersion": "1.42.1",
+  "_NOTICE": "EDIT AT YOUR OWN RISK. Make a backup first. Replace only documented example values unless you understand the setting. Invalid JSON or incorrect values can prevent NEXUS Velora BSR from starting or connecting.",
+  "veloraChannel": "YOUR_VELORA_CHANNEL_NAME",
+  "veloraStreamUrl": "https://velora.tv/YOUR_CHANNEL_NAME",
+  "beatSaberVersion": "AUTO",
+  "beatSaberPath": "",
   "requestsOpen": true,
   "maxQueueSize": 50,
   "maxRequestsPerUser": 2,
   "allowSongNameSearch": true,
-  "autoDownload": false,
+  "autoDownload": true,
   "maxSongLengthSeconds": 600,
   "commands": {
     "request": "!bsr",
