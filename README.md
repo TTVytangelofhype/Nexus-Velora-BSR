@@ -67,3 +67,21 @@ Run `scripts/install-nexus-bsr.bat` and paste the Beat Saber installation folder
 If the detected version has no validated profile, installation stops and existing plugin files are left unchanged. This is intentional: a future Beat Saber update must be validated before NEXUS marks it supported.
 
 Version-specific build artifacts are retained under `dist/plugins/<profile>/`.
+
+
+## Public configuration
+
+> **CONFIGURATION NOTICE — EDIT AT YOUR OWN RISK**
+>
+> Make a backup of your configuration before editing it. Replace only documented example values unless you understand the setting. Invalid JSON, renamed keys, missing quotation marks, commas or brackets can prevent NEXUS Velora BSR from starting, connecting to Velora, downloading maps, or communicating with Beat Saber.
+
+The distributed configuration deliberately does **not** contain the developer's personal Velora channel. Before using NEXUS, replace `YOUR_VELORA_CHANNEL_NAME` with your own channel name.
+
+Example only:
+
+```text
+Velora stream URL: https://velora.tv/ttvytangelofhype
+Channel value:     ttvytangelofhype
+```
+
+Do not copy that example unless it is actually your channel. If the placeholder is left unchanged, NEXUS refuses to start the Velora listener and prints a SETUP REQUIRED message instead of connecting to somebody else's stream.
