@@ -29,7 +29,15 @@ Write-Host "SongCore: $songCore"
 $out=Join-Path $root ("dist\plugins\"+$Profile)
 New-Item -ItemType Directory -Path $out -Force|Out-Null
 $project=Join-Path $root "src\NexusVeloraBSR.BeatSaber\NexusVeloraBSR.BeatSaber.csproj"
-dotnet build $project -c Release -p:BeatSaberDir="$BeatSaberDir" -p:IpaDll="$ipa" -p:NexusGameVersion="$($p.gameVersion)"
+$manifestSource=Join-Path $root "src\NexusVeloraBSR.BeatSaber\manifest.json"
+$manifestDir=Join-Path $root ("obj\nexus-manifests\"+$Profile)
+New-Item -ItemType Directory -Path $manifestDir -Force|Out-Null
+$manifestPath=Join-Path $manifestDir "manifest.json"
+$manifest=Get-Content $manifestSource -Raw | ConvertFrom-Json
+$manifest.gameVersion=[string]$p.gameVersion
+$manifest | ConvertTo-Json -Depth 10 | Set-Content -LiteralPath $manifestPath -Encoding UTF8
+Write-Host "Manifest gameVersion: $($manifest.gameVersion)"
+dotnet build $project -c Release -p:BeatSaberDir="$BeatSaberDir" -p:IpaDll="$ipa" -p:NexusGameVersion="$($p.gameVersion)" -p:NexusManifestPath="$manifestPath"
 if($LASTEXITCODE -ne 0){Write-Host "[FAIL] Adapter did not compile. Beat Saber was not changed.";exit $LASTEXITCODE}
 
 $built=Join-Path $root "src\NexusVeloraBSR.BeatSaber\bin\Release\net472\NexusVeloraBSR.BeatSaber.dll"
