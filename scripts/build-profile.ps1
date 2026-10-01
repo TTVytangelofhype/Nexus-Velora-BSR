@@ -34,6 +34,23 @@ if($LASTEXITCODE -ne 0){Write-Host "[FAIL] Adapter did not compile. Beat Saber w
 
 $built=Join-Path $root "src\NexusVeloraBSR.BeatSaber\bin\Release\net472\NexusVeloraBSR.BeatSaber.dll"
 if(-not(Test-Path $built)){throw "Build completed but adapter DLL was not found."}
+
+# BSIPA requires an embedded resource named exactly manifest.json.
+# Validate the actual compiled DLL before archiving or touching Beat Saber.
+try {
+  $assembly=[System.Reflection.Assembly]::ReflectionOnlyLoadFrom($built)
+  $resources=@($assembly.GetManifestResourceNames())
+} catch {
+  throw "Could not inspect the compiled adapter DLL: $($_.Exception.Message)"
+}
+Write-Host "Embedded resources: $($resources -join ', ')"
+if($resources -notcontains "manifest.json"){
+  Write-Host "[FAIL] BSIPA manifest is not embedded as manifest.json."
+  Write-Host "       Beat Saber was not changed."
+  exit 20
+}
+Write-Host "[ OK ] BSIPA manifest verified inside compiled DLL."
+
 $versioned=Join-Path $out ("NexusVeloraBSR.BeatSaber-"+$p.gameVersion+".dll")
 Copy-Item $built $versioned -Force
 Write-Host "[ OK ] Build archive: $versioned"
