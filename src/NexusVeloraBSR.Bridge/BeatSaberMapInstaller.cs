@@ -27,6 +27,26 @@ public sealed class BeatSaberMapInstaller
             if (IsBeatSaberPath(path)) candidates.Add(Path.GetFullPath(path!));
         }
 
+        // BSManager keeps independent Beat Saber instances outside Steam.
+        // Prefer a version-matching instance, then any instance containing the
+        // NEXUS adapter. This keeps map installation aligned with the game that
+        // the streamer actually launches.
+        var configuredVersion = (_config["NexusVeloraBSR:BeatSaberVersion"] ?? "AUTO").Trim();
+        var bsManagerCandidates = FindBSManagerInstances().Where(IsBeatSaberPath).Select(Path.GetFullPath).ToList();
+
+        if (!configuredVersion.Equals("AUTO", StringComparison.OrdinalIgnoreCase))
+        {
+            var matching = bsManagerCandidates.FirstOrDefault(path =>
+                BeatSaberVersionMatches(path, configuredVersion));
+            if (matching != null) return matching;
+        }
+
+        var bsManagerNexus = bsManagerCandidates.FirstOrDefault(path =>
+            File.Exists(Path.Combine(path, "Plugins", "NexusVeloraBSR.BeatSaber.dll")));
+        if (bsManagerNexus != null) return bsManagerNexus;
+
+        foreach (var path in bsManagerCandidates) candidates.Add(path);
+
         foreach (var steamRoot in FindSteamRoots())
         {
             AddCandidate(Path.Combine(steamRoot, "steamapps", "common", "Beat Saber"));
@@ -38,8 +58,6 @@ public sealed class BeatSaberMapInstaller
 
         AddCandidate(@"C:\Program Files\Oculus\Software\Software\hyperbolic-magnetism-beat-saber");
 
-        // If NEXUS is installed into one of several Beat Saber copies, prefer
-        // that copy so downloaded maps and the running game adapter stay aligned.
         var nexusInstall = candidates.FirstOrDefault(path =>
             File.Exists(Path.Combine(path, "Plugins", "NexusVeloraBSR.BeatSaber.dll")));
         if (nexusInstall != null) return nexusInstall;
@@ -121,6 +139,39 @@ public sealed class BeatSaberMapInstaller
         {
             try { if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true); } catch { }
         }
+    }
+
+    private static IEnumerable<string> FindBSManagerInstances()
+    {
+        var root = Path.Combine(
+            Environment.GetFolderPath(Environment.SpecialFolder.UserProfile),
+            "BSManager", "BSInstances");
+
+        if (!Directory.Exists(root)) yield break;
+
+        IEnumerable<string> directories;
+        try { directories = Directory.EnumerateDirectories(root); }
+        catch { yield break; }
+
+        foreach (var directory in directories)
+            yield return directory;
+    }
+
+    private static bool BeatSaberVersionMatches(string path, string requestedVersion)
+    {
+        var folderVersion = Path.GetFileName(path.TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar));
+        if (string.Equals(folderVersion, requestedVersion, StringComparison.OrdinalIgnoreCase))
+            return true;
+
+        var versionFile = Path.Combine(path, "BeatSaberVersion.txt");
+        if (!File.Exists(versionFile)) return false;
+
+        try
+        {
+            var text = File.ReadAllText(versionFile);
+            return text.IndexOf(requestedVersion, StringComparison.OrdinalIgnoreCase) >= 0;
+        }
+        catch { return false; }
     }
 
     private static IEnumerable<string> FindSteamRoots()
