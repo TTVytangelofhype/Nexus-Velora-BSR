@@ -37,11 +37,27 @@ if(-not(Test-Path $built)){throw "Build completed but adapter DLL was not found.
 
 # BSIPA requires an embedded resource named exactly manifest.json.
 # Validate the actual compiled DLL before archiving or touching Beat Saber.
+# Inspect in a child PowerShell process so repeated builds never collide with an
+# assembly of the same identity already loaded in this PowerShell AppDomain.
+$inspectScript = @'
+param([string]$DllPath)
 try {
-  $assembly=[System.Reflection.Assembly]::ReflectionOnlyLoadFrom($built)
-  $resources=@($assembly.GetManifestResourceNames())
+  $assembly = [System.Reflection.Assembly]::ReflectionOnlyLoadFrom($DllPath)
+  $assembly.GetManifestResourceNames() | ForEach-Object { Write-Output $_ }
+  exit 0
 } catch {
-  throw "Could not inspect the compiled adapter DLL: $($_.Exception.Message)"
+  Write-Error $_.Exception.Message
+  exit 1
+}
+'@
+$inspectFile = Join-Path $env:TEMP "nexus-bsr-inspect-resources.ps1"
+Set-Content -LiteralPath $inspectFile -Value $inspectScript -Encoding UTF8
+$resources = @(& powershell.exe -NoProfile -ExecutionPolicy Bypass -File $inspectFile -DllPath $built)
+$inspectExit = $LASTEXITCODE
+Remove-Item -LiteralPath $inspectFile -Force -ErrorAction SilentlyContinue
+
+if($inspectExit -ne 0){
+  throw "Could not inspect the compiled adapter DLL in a clean process."
 }
 Write-Host "Embedded resources: $($resources -join ', ')"
 if(-not ($resources | Where-Object { $_ -eq "manifest.json" -or $_ -like "*.manifest.json" })){
