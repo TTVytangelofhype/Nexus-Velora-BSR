@@ -21,21 +21,30 @@ public sealed class BeatSaberMapInstaller
         var configured = _config["NexusVeloraBSR:BeatSaberPath"];
         if (IsBeatSaberPath(configured)) return Path.GetFullPath(configured!);
 
+        var candidates = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        void AddCandidate(string? path)
+        {
+            if (IsBeatSaberPath(path)) candidates.Add(Path.GetFullPath(path!));
+        }
+
         foreach (var steamRoot in FindSteamRoots())
         {
-            var direct = Path.Combine(steamRoot, "steamapps", "common", "Beat Saber");
-            if (IsBeatSaberPath(direct)) return Path.GetFullPath(direct);
+            AddCandidate(Path.Combine(steamRoot, "steamapps", "common", "Beat Saber"));
 
             var vdf = Path.Combine(steamRoot, "steamapps", "libraryfolders.vdf");
             foreach (var library in ReadSteamLibraryPaths(vdf))
-            {
-                var candidate = Path.Combine(library, "steamapps", "common", "Beat Saber");
-                if (IsBeatSaberPath(candidate)) return Path.GetFullPath(candidate);
-            }
+                AddCandidate(Path.Combine(library, "steamapps", "common", "Beat Saber"));
         }
 
-        var oculus = @"C:\Program Files\Oculus\Software\Software\hyperbolic-magnetism-beat-saber";
-        return IsBeatSaberPath(oculus) ? oculus : null;
+        AddCandidate(@"C:\Program Files\Oculus\Software\Software\hyperbolic-magnetism-beat-saber");
+
+        // If NEXUS is installed into one of several Beat Saber copies, prefer
+        // that copy so downloaded maps and the running game adapter stay aligned.
+        var nexusInstall = candidates.FirstOrDefault(path =>
+            File.Exists(Path.Combine(path, "Plugins", "NexusVeloraBSR.BeatSaber.dll")));
+        if (nexusInstall != null) return nexusInstall;
+
+        return candidates.FirstOrDefault();
     }
 
     public async Task<string> InstallAsync(ResolvedBeatSaverMap map, CancellationToken ct = default)
