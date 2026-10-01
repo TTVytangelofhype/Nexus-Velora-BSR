@@ -34,11 +34,6 @@ namespace NexusVeloraBSR.BeatSaber
         public void OnDisable()
         {
             MainMenuAwaiter.MainMenuInitializing -= RegisterRequestPanel;
-            if (_uiRegistered && GameplaySetup.Instance != null)
-            {
-                try { GameplaySetup.Instance.RemoveTab("NEXUS BSR"); } catch { }
-                _uiRegistered = false;
-            }
             _cts?.Cancel();
             try { _worker?.Wait(1500); } catch { }
             _cts?.Dispose(); _cts = null; _worker = null;
