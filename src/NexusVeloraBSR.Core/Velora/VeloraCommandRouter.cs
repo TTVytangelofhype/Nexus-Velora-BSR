@@ -76,6 +76,10 @@ namespace NexusVeloraBSR.Core.Velora
                 case CommandType.Skip:
                     var skipped = _queue.Dequeue();
                     return skipped == null ? "The queue is empty." : $"Skipped {skipped.SongName}.";
+                case CommandType.Remove:
+                    if (string.IsNullOrWhiteSpace(command.Argument)) return "Usage: !remove <BeatSaver ID or queue position>";
+                    var removedByMod = _queue.Remove(command.Argument);
+                    return removedByMod == null ? $"No queued request found for '{command.Argument}'." : $"Removed {removedByMod.SongName} [{removedByMod.BeatSaverKey}] from the queue.";
                 case CommandType.Clear: _queue.Clear(); return "NEXUS BSR queue cleared.";
                 default: return "Moderator command recognised but is not implemented yet.";
             }
