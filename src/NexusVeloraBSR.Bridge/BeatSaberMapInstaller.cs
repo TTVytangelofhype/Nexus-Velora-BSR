@@ -152,7 +152,7 @@ public sealed class BeatSaberMapInstaller
 
         var matches = System.Text.RegularExpressions.Regex.Matches(
             text,
-            "\\\\"path\\\\"\\s*\\\\"(?<path>[^\\\\"]+)\\\\"",
+            @"""path""\s*""(?<path>[^""]+)""",
             System.Text.RegularExpressions.RegexOptions.IgnoreCase);
 
         foreach (System.Text.RegularExpressions.Match match in matches)
