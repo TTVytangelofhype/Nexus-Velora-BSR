@@ -1,0 +1,14 @@
+{
+  "$schema": "https://raw.githubusercontent.com/beat-saber-modding-group/BSIPA-MetadataFileSchema/master/Schema.json",
+  "author": "NEXUS",
+  "description": "NEXUS Velora BSR game adapter. Connects Beat Saber/SongCore to the local NEXUS Velora request bridge.",
+  "gameVersion": "1.40.8",
+  "id": "NexusVeloraBSR",
+  "name": "NEXUS Velora BSR",
+  "version": "0.1.0",
+  "dependsOn": {
+    "BSIPA": "^4.3.5",
+    "SongCore": "*"
+  },
+  "features": []
+}
