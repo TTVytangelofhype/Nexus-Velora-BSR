@@ -4,6 +4,7 @@ using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
 using IPA;
+using BeatSaberMarkupLanguage;
 using IPALogger = IPA.Logging.Logger;
 
 namespace NexusVeloraBSR.BeatSaber
@@ -15,6 +16,8 @@ namespace NexusVeloraBSR.BeatSaber
         private CancellationTokenSource? _cts;
         private Task? _worker;
         private string _lastQueueSignature = string.Empty;
+        private readonly NexusRequestPanel _requestPanel = new NexusRequestPanel();
+        private bool _uiRegistered;
 
         [Init]
         public void Init(IPALogger logger) { Log = logger; logger.Info("NEXUS Velora BSR adapter initialized."); }
@@ -22,6 +25,7 @@ namespace NexusVeloraBSR.BeatSaber
         [OnEnable]
         public void OnEnable()
         {
+            MainMenuAwaiter.MainMenuInitializing += RegisterRequestPanel;
             _cts = new CancellationTokenSource();
             _worker = Task.Run(() => BridgeLoopAsync(_cts.Token));
         }
@@ -29,9 +33,23 @@ namespace NexusVeloraBSR.BeatSaber
         [OnDisable]
         public void OnDisable()
         {
+            MainMenuAwaiter.MainMenuInitializing -= RegisterRequestPanel;
+            if (_uiRegistered && GameplaySetup.Instance != null)
+            {
+                try { GameplaySetup.Instance.RemoveTab("NEXUS BSR"); } catch { }
+                _uiRegistered = false;
+            }
             _cts?.Cancel();
             try { _worker?.Wait(1500); } catch { }
             _cts?.Dispose(); _cts = null; _worker = null;
+        }
+
+        private void RegisterRequestPanel()
+        {
+            if (_uiRegistered || GameplaySetup.Instance == null) return;
+            GameplaySetup.Instance.AddTab("NEXUS BSR", "NexusVeloraBSR.BeatSaber.nexus-requests.bsml", _requestPanel);
+            _uiRegistered = true;
+            Log?.Info("NEXUS BSR Gameplay Setup panel registered.");
         }
 
         private async Task BridgeLoopAsync(CancellationToken ct)
@@ -68,6 +86,7 @@ namespace NexusVeloraBSR.BeatSaber
                         Log?.Warn("NEXUS bridge disconnected; waiting for it to return. " + ex.Message);
                         bridgeConnected = false;
                     }
+                    _requestPanel.SetDisconnected();
                 }
                 try { await Task.Delay(1500, ct); } catch (TaskCanceledException) { }
             }
@@ -82,6 +101,7 @@ namespace NexusVeloraBSR.BeatSaber
 
             if (!first.Success)
             {
+                _requestPanel.SetQueue(string.Empty, string.Empty, string.Empty, 0);
                 if (_lastQueueSignature != "empty")
                 {
                     Log?.Info("NEXUS request queue is empty.");
@@ -97,6 +117,7 @@ namespace NexusVeloraBSR.BeatSaber
             if (signature == _lastQueueSignature) return;
 
             var count = Regex.Matches(json ?? string.Empty, "\\\"beatSaverKey\\\"\\s*:", RegexOptions.IgnoreCase).Count;
+            _requestPanel.SetQueue(song, key, requester, count);
             Log?.Info($"NEXUS NEXT REQUEST: {song} [{key}] requested by {requester}. Queue: {count}.");
             _lastQueueSignature = signature;
         }
