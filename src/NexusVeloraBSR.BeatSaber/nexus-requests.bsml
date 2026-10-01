@@ -1,0 +1,7 @@
+<vertical child-control-height="false" spacing="1">
+  <text text="NEXUS VELORA BSR" align="Center" font-size="5.5" />
+  <text text="~status" align="Center" font-size="3.2" />
+  <text text="~next-request" align="Center" font-size="4.2" />
+  <text text="~queue-summary" align="Center" font-size="3.2" />
+  <text text="Viewer command: !bsr &lt;BeatSaver ID or song&gt;" align="Center" font-size="2.8" />
+</vertical>
