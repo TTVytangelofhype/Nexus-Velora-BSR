@@ -21,13 +21,21 @@ public sealed class BeatSaberMapInstaller
         var configured = _config["NexusVeloraBSR:BeatSaberPath"];
         if (IsBeatSaberPath(configured)) return Path.GetFullPath(configured!);
 
-        var candidates = new[]
+        foreach (var steamRoot in FindSteamRoots())
         {
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam", "steamapps", "common", "Beat Saber"),
-            Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Steam", "steamapps", "common", "Beat Saber"),
-            @"C:\Program Files\Oculus\Software\Software\hyperbolic-magnetism-beat-saber"
-        };
-        return candidates.FirstOrDefault(IsBeatSaberPath);
+            var direct = Path.Combine(steamRoot, "steamapps", "common", "Beat Saber");
+            if (IsBeatSaberPath(direct)) return Path.GetFullPath(direct);
+
+            var vdf = Path.Combine(steamRoot, "steamapps", "libraryfolders.vdf");
+            foreach (var library in ReadSteamLibraryPaths(vdf))
+            {
+                var candidate = Path.Combine(library, "steamapps", "common", "Beat Saber");
+                if (IsBeatSaberPath(candidate)) return Path.GetFullPath(candidate);
+            }
+        }
+
+        var oculus = @"C:\Program Files\Oculus\Software\Software\hyperbolic-magnetism-beat-saber";
+        return IsBeatSaberPath(oculus) ? oculus : null;
     }
 
     public async Task<string> InstallAsync(ResolvedBeatSaverMap map, CancellationToken ct = default)
@@ -103,6 +111,55 @@ public sealed class BeatSaberMapInstaller
         finally
         {
             try { if (Directory.Exists(tempRoot)) Directory.Delete(tempRoot, true); } catch { }
+        }
+    }
+
+    private static IEnumerable<string> FindSteamRoots()
+    {
+        var roots = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+        void Add(string? path)
+        {
+            if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path)) roots.Add(Path.GetFullPath(path));
+        }
+
+        Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Steam"));
+        Add(Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Steam"));
+
+        try
+        {
+            using var key = Microsoft.Win32.Registry.CurrentUser.OpenSubKey(@"Software\Valve\Steam");
+            Add(key?.GetValue("SteamPath") as string);
+        }
+        catch { }
+
+        try
+        {
+            using var key = Microsoft.Win32.Registry.LocalMachine.OpenSubKey(@"SOFTWARE\WOW6432Node\Valve\Steam");
+            Add(key?.GetValue("InstallPath") as string);
+        }
+        catch { }
+
+        return roots;
+    }
+
+    private static IEnumerable<string> ReadSteamLibraryPaths(string vdfPath)
+    {
+        if (!File.Exists(vdfPath)) yield break;
+
+        string text;
+        try { text = File.ReadAllText(vdfPath); }
+        catch { yield break; }
+
+        var matches = System.Text.RegularExpressions.Regex.Matches(
+            text,
+            "\\\\"path\\\\"\\s*\\\\"(?<path>[^\\\\"]+)\\\\"",
+            System.Text.RegularExpressions.RegexOptions.IgnoreCase);
+
+        foreach (System.Text.RegularExpressions.Match match in matches)
+        {
+            var path = match.Groups["path"].Value.Replace(@"\\", @"\");
+            if (!string.IsNullOrWhiteSpace(path) && Directory.Exists(path))
+                yield return path;
         }
     }
 
