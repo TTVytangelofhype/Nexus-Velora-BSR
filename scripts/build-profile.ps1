@@ -1,5 +1,5 @@
 param(
-  [ValidateSet("stable-1.42.1","latest")][string]$Profile = "stable-1.42.1",
+  [ValidateSet("stable-1.42.1","stable-1.44.1","stable-1.40.8","latest")][string]$Profile = "stable-1.42.1",
   [Parameter(Mandatory=$true)][string]$BeatSaberDir,
   [switch]$Install
 )
