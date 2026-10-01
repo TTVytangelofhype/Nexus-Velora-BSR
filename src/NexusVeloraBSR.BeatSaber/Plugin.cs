@@ -96,7 +96,7 @@ namespace NexusVeloraBSR.BeatSaber
             var signature = key + "|" + requester;
             if (signature == _lastQueueSignature) return;
 
-            var count = Regex.Matches(json ?? string.Empty, "\\"beatSaverKey\\\"\\s*:", RegexOptions.IgnoreCase).Count;
+            var count = Regex.Matches(json ?? string.Empty, "\\\"beatSaverKey\\\"\\s*:", RegexOptions.IgnoreCase).Count;
             Log?.Info($"NEXUS NEXT REQUEST: {song} [{key}] requested by {requester}. Queue: {count}.");
             _lastQueueSignature = signature;
         }
