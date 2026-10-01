@@ -13,6 +13,22 @@
       "gameVersion": "1.45.2",
       "channel": "latest",
       "notes": "Current PC target as of 2026-09-30. Build against the BSIPA and SongCore DLLs installed in the latest game folder."
+    },
+    {
+      "id": "stable-1.44.1",
+      "label": "Beat Saber 1.44.1 (Steam Legacy)",
+      "gameVersion": "1.44.1",
+      "channel": "stable",
+      "steamBranch": "1.44.1_legacy",
+      "notes": "Steam-exposed legacy target. Compile and validate against the BSIPA and SongCore installed after switching to this branch."
+    },
+    {
+      "id": "stable-1.40.8",
+      "label": "Beat Saber 1.40.8 (Steam Legacy)",
+      "gameVersion": "1.40.8",
+      "channel": "stable",
+      "steamBranch": "legacy1.40.8_unity_v2021.3.16f1",
+      "notes": "Steam-exposed Unity 2021 legacy target. Compile and validate independently against this branch's BSIPA and SongCore."
     }
   ]
 }
