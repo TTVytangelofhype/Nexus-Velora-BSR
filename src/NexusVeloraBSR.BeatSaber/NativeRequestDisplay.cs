@@ -1,6 +1,5 @@
 using TMPro;
 using UnityEngine;
-using UnityEngine.UI;
 
 namespace NexusVeloraBSR.BeatSaber
 {
@@ -36,7 +35,7 @@ namespace NexusVeloraBSR.BeatSaber
             textRect.offsetMax = Vector2.zero;
             _text.alignment = TextAlignmentOptions.Center;
             _text.fontSize = 8f;
-            _text.enableWordWrapping = true;
+            _text.textWrappingMode = TextWrappingModes.Normal;
             _text.text = _message;
 
             _root = canvasObject;
