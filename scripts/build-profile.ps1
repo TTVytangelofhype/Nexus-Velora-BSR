@@ -18,16 +18,13 @@ $ipaCandidates=@(
 )
 $ipa=$ipaCandidates|Where-Object{Test-Path $_}|Select-Object -First 1
 $songCore=Join-Path $BeatSaberDir "Plugins\SongCore.dll"
-$bsml=Join-Path $BeatSaberDir "Plugins\BeatSaberMarkupLanguage.dll"
 if(-not $ipa){throw "No compatible BSIPA loader assembly found."}
 if(-not(Test-Path $songCore)){throw "SongCore.dll is not active in Plugins."}
-if(-not(Test-Path $bsml)){throw "BeatSaberMarkupLanguage.dll is not active in Plugins. Install/enable BSML in BSManager first."}
 
 Write-Host "=== NEXUS adapter build ==="
 Write-Host "Profile:  $($p.label)"
 Write-Host "BSIPA:    $ipa"
 Write-Host "SongCore: $songCore"
-Write-Host "BSML:     $bsml"
 
 $out=Join-Path $root ("dist\plugins\"+$Profile)
 New-Item -ItemType Directory -Path $out -Force|Out-Null
