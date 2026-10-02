@@ -5,6 +5,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using IPA;
 using IPALogger = IPA.Logging.Logger;
+using UnityEngine.SceneManagement;
 
 namespace NexusVeloraBSR.BeatSaber
 {
@@ -26,6 +27,8 @@ namespace NexusVeloraBSR.BeatSaber
         {
             _unityContext = SynchronizationContext.Current;
             _display.EnsureCreated();
+            SceneManager.activeSceneChanged += OnActiveSceneChanged;
+            UpdateOverlayForScene(SceneManager.GetActiveScene());
             _cts = new CancellationTokenSource();
             _worker = Task.Run(() => BridgeLoopAsync(_cts.Token));
         }
@@ -33,9 +36,23 @@ namespace NexusVeloraBSR.BeatSaber
         [OnDisable]
         public void OnDisable()
         {
+            SceneManager.activeSceneChanged -= OnActiveSceneChanged;
             _cts?.Cancel();
             try { _worker?.Wait(1500); } catch { }
             _cts?.Dispose(); _cts = null; _worker = null;
+        }
+
+        private void OnActiveSceneChanged(Scene previous, Scene current)
+        {
+            UpdateOverlayForScene(current);
+        }
+
+        private void UpdateOverlayForScene(Scene scene)
+        {
+            var name = scene.name ?? string.Empty;
+            var gameplay = name.IndexOf("GameCore", StringComparison.OrdinalIgnoreCase) >= 0;
+            _display.SetVisible(!gameplay);
+            Log?.Info(gameplay ? "NEXUS request overlay hidden for gameplay." : "NEXUS request overlay visible in menu.");
         }
 
         private void RunOnUnityThread(Action action)
