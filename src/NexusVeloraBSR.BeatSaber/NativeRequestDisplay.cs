@@ -22,8 +22,8 @@ namespace NexusVeloraBSR.BeatSaber
             var rect = canvasObject.GetComponent<RectTransform>();
             rect.sizeDelta = new Vector2(90f, 35f);
             rect.localScale = Vector3.one * 0.01f;
-            rect.position = new Vector3(-1.15f, 1.75f, 2.2f);
-            rect.rotation = Quaternion.Euler(0f, 18f, 0f);
+            rect.localPosition = Vector3.zero;
+            rect.localRotation = Quaternion.identity;
 
             var textObject = new GameObject("NEXUS Request Text");
             textObject.transform.SetParent(canvasObject.transform, false);
@@ -39,7 +39,26 @@ namespace NexusVeloraBSR.BeatSaber
             _text.text = _message;
 
             _root = canvasObject;
+            AttachToMainCamera();
             Plugin.Log?.Info("NEXUS native request display created.");
+        }
+
+        public void AttachToMainCamera()
+        {
+            if (_root == null) return;
+            var camera = Camera.main;
+            if (camera == null)
+            {
+                Plugin.Log?.Warn("NEXUS display is waiting for the Beat Saber main camera.");
+                return;
+            }
+
+            var rect = _root.GetComponent<RectTransform>();
+            rect.SetParent(camera.transform, false);
+            rect.localPosition = new Vector3(0f, -0.22f, 2.0f);
+            rect.localRotation = Quaternion.identity;
+            rect.localScale = Vector3.one * 0.01f;
+            Plugin.Log?.Info("NEXUS display attached to the active Beat Saber camera.");
         }
 
         public void SetConnected(string song, string key, string requester, int count)
