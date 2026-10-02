@@ -5,10 +5,8 @@
   <ItemGroup>
     <EmbeddedResource Include="$(NexusManifestPath)" Condition="'$(NexusManifestPath)' != ''" />
     <EmbeddedResource Include="manifest.json" Condition="'$(NexusManifestPath)' == ''" />
-    <EmbeddedResource Include="nexus-requests.bsml" />
     <Reference Include="System.Net.Http" />
     <Reference Include="IPA"><HintPath>$(IpaDll)</HintPath><Private>false</Private></Reference>
     <Reference Include="SongCore"><HintPath>$(BeatSaberDir)\Plugins\SongCore.dll</HintPath><Private>false</Private></Reference>
-    <Reference Include="BeatSaberMarkupLanguage"><HintPath>$(BeatSaberDir)\Plugins\BeatSaberMarkupLanguage.dll</HintPath><Private>false</Private></Reference>
   </ItemGroup>
 </Project>
