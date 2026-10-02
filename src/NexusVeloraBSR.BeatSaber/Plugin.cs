@@ -3,7 +3,6 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
-using UnityEngine.SceneManagement;
 using IPA;
 using IPALogger = IPA.Logging.Logger;
 
@@ -26,7 +25,6 @@ namespace NexusVeloraBSR.BeatSaber
         public void OnEnable()
         {
             _unityContext = SynchronizationContext.Current;
-            SceneManager.sceneLoaded += OnSceneLoaded;
             _display.EnsureCreated();
             _cts = new CancellationTokenSource();
             _worker = Task.Run(() => BridgeLoopAsync(_cts.Token));
@@ -35,19 +33,9 @@ namespace NexusVeloraBSR.BeatSaber
         [OnDisable]
         public void OnDisable()
         {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
             _cts?.Cancel();
             try { _worker?.Wait(1500); } catch { }
             _cts?.Dispose(); _cts = null; _worker = null;
-        }
-
-        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-        {
-            RunOnUnityThread(() =>
-            {
-                _display.EnsureCreated();
-                _display.AttachToMainCamera();
-            });
         }
 
         private void RunOnUnityThread(Action action)
