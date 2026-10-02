@@ -9,6 +9,11 @@ namespace NexusVeloraBSR.BeatSaber
         private TextMeshProUGUI? _text;
         private string _message = "NEXUS VELORA BSR\nBridge: waiting...";
 
+        public void SetVisible(bool visible)
+        {
+            if (_root != null) _root.SetActive(visible);
+        }
+
         public void EnsureCreated()
         {
             if (_root != null) return;
