@@ -50,9 +50,15 @@ namespace NexusVeloraBSR.BeatSaber
         private void UpdateOverlayForScene(Scene scene)
         {
             var name = scene.name ?? string.Empty;
-            var gameplay = name.IndexOf("GameCore", StringComparison.OrdinalIgnoreCase) >= 0;
+            // Beat Saber menu scenes contain MenuCore. Hide only after entering an actual
+            // gameplay scene; do not treat persistent Core/GameCore bootstrap scenes as gameplay.
+            var menu = name.IndexOf("MenuCore", StringComparison.OrdinalIgnoreCase) >= 0;
+            var gameplay = !menu &&
+                (name.Equals("StandardGameplay", StringComparison.OrdinalIgnoreCase) ||
+                 name.Equals("MultiplayerGameplay", StringComparison.OrdinalIgnoreCase) ||
+                 name.IndexOf("GameplayCore", StringComparison.OrdinalIgnoreCase) >= 0);
             _display.SetVisible(!gameplay);
-            Log?.Info(gameplay ? "NEXUS request overlay hidden for gameplay." : "NEXUS request overlay visible in menu.");
+            Log?.Info($"NEXUS overlay scene='{name}' visible={!gameplay}.");
         }
 
         private void RunOnUnityThread(Action action)
