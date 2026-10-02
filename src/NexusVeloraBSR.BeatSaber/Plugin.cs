@@ -3,6 +3,7 @@ using System.Net.Http;
 using System.Text.RegularExpressions;
 using System.Threading;
 using System.Threading.Tasks;
+using UnityEngine.SceneManagement;
 using IPA;
 using IPALogger = IPA.Logging.Logger;
 
@@ -16,6 +17,7 @@ namespace NexusVeloraBSR.BeatSaber
         private Task? _worker;
         private string _lastQueueSignature = string.Empty;
         private readonly NativeRequestDisplay _display = new NativeRequestDisplay();
+        private SynchronizationContext? _unityContext;
 
         [Init]
         public void Init(IPALogger logger) { Log = logger; logger.Info("NEXUS Velora BSR adapter initialized."); }
@@ -23,6 +25,8 @@ namespace NexusVeloraBSR.BeatSaber
         [OnEnable]
         public void OnEnable()
         {
+            _unityContext = SynchronizationContext.Current;
+            SceneManager.sceneLoaded += OnSceneLoaded;
             _display.EnsureCreated();
             _cts = new CancellationTokenSource();
             _worker = Task.Run(() => BridgeLoopAsync(_cts.Token));
@@ -31,9 +35,26 @@ namespace NexusVeloraBSR.BeatSaber
         [OnDisable]
         public void OnDisable()
         {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
             _cts?.Cancel();
             try { _worker?.Wait(1500); } catch { }
             _cts?.Dispose(); _cts = null; _worker = null;
+        }
+
+        private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+        {
+            RunOnUnityThread(() =>
+            {
+                _display.EnsureCreated();
+                _display.AttachToMainCamera();
+            });
+        }
+
+        private void RunOnUnityThread(Action action)
+        {
+            var context = _unityContext;
+            if (context != null) context.Post(_ => action(), null);
+            else action();
         }
 
         private async Task BridgeLoopAsync(CancellationToken ct)
@@ -70,7 +91,7 @@ namespace NexusVeloraBSR.BeatSaber
                         Log?.Warn("NEXUS bridge disconnected; waiting for it to return. " + ex.Message);
                         bridgeConnected = false;
                     }
-                    _display.SetDisconnected();
+                    RunOnUnityThread(() => _display.SetDisconnected());
                 }
                 try { await Task.Delay(1500, ct); } catch (TaskCanceledException) { }
             }
@@ -85,7 +106,7 @@ namespace NexusVeloraBSR.BeatSaber
 
             if (!first.Success)
             {
-                _display.SetConnected(string.Empty, string.Empty, string.Empty, 0);
+                RunOnUnityThread(() => _display.SetConnected(string.Empty, string.Empty, string.Empty, 0));
                 if (_lastQueueSignature != "empty")
                 {
                     Log?.Info("NEXUS request queue is empty.");
@@ -101,7 +122,7 @@ namespace NexusVeloraBSR.BeatSaber
             if (signature == _lastQueueSignature) return;
 
             var count = Regex.Matches(json ?? string.Empty, "\\\"beatSaverKey\\\"\\s*:", RegexOptions.IgnoreCase).Count;
-            _display.SetConnected(song, key, requester, count);
+            RunOnUnityThread(() => _display.SetConnected(song, key, requester, count));
             Log?.Info($"NEXUS NEXT REQUEST: {song} [{key}] requested by {requester}. Queue: {count}.");
             _lastQueueSignature = signature;
         }
