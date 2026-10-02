@@ -16,14 +16,16 @@ namespace NexusVeloraBSR.BeatSaber
             var canvasObject = new GameObject("NEXUS Velora BSR Canvas");
             Object.DontDestroyOnLoad(canvasObject);
             var canvas = canvasObject.AddComponent<Canvas>();
-            canvas.renderMode = RenderMode.WorldSpace;
-            canvas.sortingOrder = 1000;
+            canvas.renderMode = RenderMode.ScreenSpaceOverlay;
+            canvas.sortingOrder = 32000;
 
             var rect = canvasObject.GetComponent<RectTransform>();
-            rect.sizeDelta = new Vector2(90f, 35f);
-            rect.localScale = Vector3.one * 0.01f;
-            rect.localPosition = Vector3.zero;
-            rect.localRotation = Quaternion.identity;
+            rect.anchorMin = new Vector2(0.5f, 1f);
+            rect.anchorMax = new Vector2(0.5f, 1f);
+            rect.pivot = new Vector2(0.5f, 1f);
+            rect.anchoredPosition = new Vector2(0f, -70f);
+            rect.sizeDelta = new Vector2(900f, 220f);
+            rect.localScale = Vector3.one;
 
             var textObject = new GameObject("NEXUS Request Text");
             textObject.transform.SetParent(canvasObject.transform, false);
@@ -34,31 +36,13 @@ namespace NexusVeloraBSR.BeatSaber
             textRect.offsetMin = Vector2.zero;
             textRect.offsetMax = Vector2.zero;
             _text.alignment = TextAlignmentOptions.Center;
-            _text.fontSize = 8f;
+            _text.fontSize = 34f;
+            _text.color = Color.white;
             _text.textWrappingMode = TextWrappingModes.Normal;
             _text.text = _message;
 
             _root = canvasObject;
-            AttachToMainCamera();
-            Plugin.Log?.Info("NEXUS native request display created.");
-        }
-
-        public void AttachToMainCamera()
-        {
-            if (_root == null) return;
-            var camera = Camera.main;
-            if (camera == null)
-            {
-                Plugin.Log?.Warn("NEXUS display is waiting for the Beat Saber main camera.");
-                return;
-            }
-
-            var rect = _root.GetComponent<RectTransform>();
-            rect.SetParent(camera.transform, false);
-            rect.localPosition = new Vector3(0f, -0.22f, 2.0f);
-            rect.localRotation = Quaternion.identity;
-            rect.localScale = Vector3.one * 0.01f;
-            Plugin.Log?.Info("NEXUS display attached to the active Beat Saber camera.");
+            Plugin.Log?.Info("NEXUS screen-space request display created.");
         }
 
         public void SetConnected(string song, string key, string requester, int count)
