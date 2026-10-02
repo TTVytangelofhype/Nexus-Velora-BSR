@@ -15,6 +15,7 @@ namespace NexusVeloraBSR.BeatSaber
         private CancellationTokenSource? _cts;
         private Task? _worker;
         private string _lastQueueSignature = string.Empty;
+        private readonly NativeRequestDisplay _display = new NativeRequestDisplay();
 
         [Init]
         public void Init(IPALogger logger) { Log = logger; logger.Info("NEXUS Velora BSR adapter initialized."); }
@@ -22,6 +23,7 @@ namespace NexusVeloraBSR.BeatSaber
         [OnEnable]
         public void OnEnable()
         {
+            _display.EnsureCreated();
             _cts = new CancellationTokenSource();
             _worker = Task.Run(() => BridgeLoopAsync(_cts.Token));
         }
@@ -68,6 +70,7 @@ namespace NexusVeloraBSR.BeatSaber
                         Log?.Warn("NEXUS bridge disconnected; waiting for it to return. " + ex.Message);
                         bridgeConnected = false;
                     }
+                    _display.SetDisconnected();
                 }
                 try { await Task.Delay(1500, ct); } catch (TaskCanceledException) { }
             }
@@ -82,6 +85,7 @@ namespace NexusVeloraBSR.BeatSaber
 
             if (!first.Success)
             {
+                _display.SetConnected(string.Empty, string.Empty, string.Empty, 0);
                 if (_lastQueueSignature != "empty")
                 {
                     Log?.Info("NEXUS request queue is empty.");
@@ -97,6 +101,7 @@ namespace NexusVeloraBSR.BeatSaber
             if (signature == _lastQueueSignature) return;
 
             var count = Regex.Matches(json ?? string.Empty, "\\\"beatSaverKey\\\"\\s*:", RegexOptions.IgnoreCase).Count;
+            _display.SetConnected(song, key, requester, count);
             Log?.Info($"NEXUS NEXT REQUEST: {song} [{key}] requested by {requester}. Queue: {count}.");
             _lastQueueSignature = signature;
         }
