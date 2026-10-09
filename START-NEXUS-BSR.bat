@@ -12,7 +12,7 @@ echo NEXUS Velora BSR
 echo Starting local bridge in a separate window...
 start "NEXUS Velora Bridge" /D "%ROOT%" cmd /k call "%BRIDGE%"
 echo.
-echo Launch Beat Saber 1.44.1 from BSManager as normal.
+echo Launch Beat Saber 1.40.8 or 1.44.1 from BSManager as normal.
 echo BSIPA loads the installed NEXUS plugin automatically.
 echo No PowerShell build is required for ordinary launches.
 timeout /t 4 >nul
