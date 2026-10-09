@@ -1,87 +1,69 @@
 # NEXUS Velora BSR
 
-Velora song-request integration for **Beat Saber 1.42.1** using BeatSaver.
+**Velora chat song requests for Beat Saber 1.40.8 and 1.44.1**, powered by BeatSaver and SongCore.
 
-> Development status: **v0.1.0 — foundation / not yet a release build**
+> **Development status:** v0.1.0 — working bridge and tested 1.44.1 adapter; 1.40.8 compatibility is being tested. Not a final public release.
 
-Primary channel: `velora.tv/ttvytangelofhype`
+## Supported / planned Beat Saber versions
 
-## Goal
+| Beat Saber version | Status |
+| --- | --- |
+| **1.44.1 (BSManager legacy)** | Bridge, downloads and live SongCore refresh tested; native request overlay experimental |
+| **1.40.8 (BSManager legacy)** | Build/install profile available; requires compilation and in-game testing |
+| 1.42.1 | Preserved compatibility target, **not verified** |
+| Latest | Separate experimental profile, **not verified** |
 
-NEXUS Velora BSR will listen for song requests from Velora chat, validate BeatSaver maps, maintain a protected request queue, expose an OBS-friendly queue display, and pass accepted maps to the Beat Saber side of the integration.
+Each game version uses its own BSManager installation and independently compiled plugin DLL. The bridge is shared; do not run two copies on port 24842.
+
+## Quick start (Windows)
+
+1. Install Beat Saber **1.40.8** or **1.44.1** through BSManager, with compatible **BSIPA** and **SongCore**.
+2. Download the repository and double-click **`INSTALL-NEXUS-PLUGIN.bat`**. Choose **1** for 1.40.8 or **2** for 1.44.1. This compiles against your selected game's installed assemblies and installs only if compilation succeeds.
+3. Edit `src/NexusVeloraBSR.Bridge/appsettings.json`: replace `YOUR_VELORA_CHANNEL_NAME` with your Velora channel. Set `BeatSaberPath` to the **same BSManager instance folder** you launch (for example, `C:\Users\YOUR_USER\BSManager\BSInstances\1.40.8`). If you switch versions, update this path.
+4. Double-click **`START-NEXUS-BSR.bat`** to launch the bridge. Then launch the selected Beat Saber version from BSManager. The installed BSIPA plugin loads automatically; no rebuild is required for normal play.
+
+Requires the **.NET SDK** for source builds and running the development bridge. The installer expects BSManager instances under `%USERPROFILE%\BSManager\BSInstances\`.
+
+### Manual build (optional)
+
+```powershell
+.\scripts\build-profile.ps1 -Profile stable-1.40.8 -BeatSaberDir "$env:USERPROFILE\BSManager\BSInstances\1.40.8" -Install
+```
+
+For 1.44.1 use `stable-1.44.1` and the corresponding `1.44.1` directory. A failed build leaves the existing game plugin unchanged.
 
 ## Viewer commands
 
 - `!bsr <BeatSaver ID or song>` — request a map
-- `!queue` — view queue status
+- `!queue` — queue status
 - `!oops` — remove your latest request
-- `!bsrhelp` — show request help
+- `!bsrhelp` — help
 
 ## Streamer / moderator commands
 
-- `!open`
-- `!close`
-- `!skip`
-- `!remove <ID>`
-- `!clearqueue`
-- `!block <ID>`
+- `!open`, `!close`, `!skip`, `!remove <ID or position>`, `!clearqueue`
+- `!block <ID>` — planned; not fully implemented
 
-## v0.1.0 foundation
+## What currently works
 
-The repository currently contains the shared C# request model, queue engine, command parser, and example configuration. Duplicate-map protection and per-viewer queue limits are implemented in the queue layer.
+The Velora listener polls new chat messages, resolves BeatSaver requests, enforces queue limits, downloads accepted maps to the configured Beat Saber instance and signals the SongCore adapter to refresh custom songs. The 1.44.1 adapter has been tested in-game. A native NEXUS queue overlay is in development; its placement and menu/gameplay visibility are still being refined. The bridge logs replies locally; it does **not** yet post responses back into Velora chat.
 
-Next development stages are the BeatSaver client, Velora chat connector, local bridge/API, OBS queue page, and Beat Saber 1.42.1 plugin adapter.
+The bridge listens on `http://127.0.0.1:24842` and exposes development endpoints such as `/api/status` and `/api/queue`.
 
-## Safety defaults
+## Configuration and safety
 
-Automatic map downloads are disabled in the example configuration. Request validation, queue limits, blacklist support, and moderator-only administrative commands will be enforced before the first usable release.
+> **EDIT AT YOUR OWN RISK.** Back up configuration files before changing them. Invalid JSON or an incorrect Beat Saber folder can stop requests or install maps into the wrong game instance.
 
+The distributed configuration contains the placeholder `YOUR_VELORA_CHANNEL_NAME`; set it to **your own channel**, not somebody else's. The public example configuration is at `config/nexus-velora-bsr.example.json`.
 
-## Running the bridge (development)
+Map downloads are enabled by default in the bridge configuration. Requests are subject to queue and duplicate limits. This is development software; do not expose the localhost bridge directly to the internet.
 
-NEXUS Velora BSR now includes a self-contained Windows/.NET bridge. It polls new Velora chat messages for the configured channel and routes commands into the BeatSaver-backed request queue.
+## Project structure
 
-Requirements: .NET 8 SDK during development.
-
-1. Run `scripts/run-bridge.bat`.
-2. Wait for the console to report that the Velora listener is connected.
-3. Send a new `!bsr <BeatSaver ID>` message in the configured Velora channel.
-4. Check `/api/queue` on the local bridge to confirm the request was accepted.
-
-The listener primes its message watermark on startup so old chat commands are not replayed into a fresh queue.
-
-
-## Multi-version Beat Saber support
-
-NEXUS keeps the Velora/BeatSaver bridge version-independent and builds the in-game adapter against each selected Beat Saber installation.
-
-Validated profiles are stored in `config/beatsaber-profiles.json`.
-
-- `stable-1.42.1` preserves the Beat Saber 1.42.1 target.
-- `latest` is the separately maintained current-PC target.
-
-### Guarded installer
-
-Run `scripts/install-nexus-bsr.bat` and paste the Beat Saber installation folder. NEXUS detects the installed game version before compiling or copying the adapter.
-
-If the detected version has no validated profile, installation stops and existing plugin files are left unchanged. This is intentional: a future Beat Saber update must be validated before NEXUS marks it supported.
-
-Version-specific build artifacts are retained under `dist/plugins/<profile>/`.
-
-
-## Public configuration
-
-> **CONFIGURATION NOTICE — EDIT AT YOUR OWN RISK**
->
-> Make a backup of your configuration before editing it. Replace only documented example values unless you understand the setting. Invalid JSON, renamed keys, missing quotation marks, commas or brackets can prevent NEXUS Velora BSR from starting, connecting to Velora, downloading maps, or communicating with Beat Saber.
-
-The distributed configuration deliberately does **not** contain the developer's personal Velora channel. Before using NEXUS, replace `YOUR_VELORA_CHANNEL_NAME` with your own channel name.
-
-Example only:
-
-```text
-Velora stream URL: https://velora.tv/ttvytangelofhype
-Channel value:     ttvytangelofhype
-```
-
-Do not copy that example unless it is actually your channel. If the placeholder is left unchanged, NEXUS refuses to start the Velora listener and prints a SETUP REQUIRED message instead of connecting to somebody else's stream.
+- `src/NexusVeloraBSR.Core` — request and queue logic
+- `src/NexusVeloraBSR.Bridge` — Velora listener, BeatSaver integration, local API
+- `src/NexusVeloraBSR.BeatSaber` — BSIPA/SongCore game adapter and experimental overlay
+- `config/beatsaber-profiles.json` — version-specific build profiles
+- `scripts/build-profile.ps1` — guarded build/install helper
+- `INSTALL-NEXUS-PLUGIN.bat` — choose and install a game version
+- `START-NEXUS-BSR.bat` — one-click bridge startup
