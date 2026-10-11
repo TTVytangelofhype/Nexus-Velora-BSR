@@ -6,6 +6,8 @@ using System.Threading.Tasks;
 using IPA;
 using IPALogger = IPA.Logging.Logger;
 using UnityEngine.SceneManagement;
+using System.IO;
+using System.Reflection;
 
 namespace NexusVeloraBSR.BeatSaber
 {
@@ -19,6 +21,7 @@ namespace NexusVeloraBSR.BeatSaber
         private readonly NativeRequestDisplay _display = new NativeRequestDisplay();
         private SynchronizationContext? _unityContext;
         private bool _gameplayActive;
+        private bool _showOverlay;
 
         [Init]
         public void Init(IPALogger logger) { Log = logger; logger.Info("NEXUS Velora BSR adapter initialized."); }
@@ -27,9 +30,14 @@ namespace NexusVeloraBSR.BeatSaber
         public void OnEnable()
         {
             _unityContext = SynchronizationContext.Current;
-            _display.EnsureCreated();
-            SceneManager.activeSceneChanged += OnActiveSceneChanged;
-            UpdateOverlayForScene(SceneManager.GetActiveScene());
+            _showOverlay = ReadOverlaySetting();
+            if (_showOverlay)
+            {
+                _display.EnsureCreated();
+                SceneManager.activeSceneChanged += OnActiveSceneChanged;
+                UpdateOverlayForScene(SceneManager.GetActiveScene());
+            }
+            Log?.Info("NEXUS in-game overlay " + (_showOverlay ? "enabled" : "disabled (default)") + ".");
             _cts = new CancellationTokenSource();
             _worker = Task.Run(() => BridgeLoopAsync(_cts.Token));
         }
@@ -37,7 +45,7 @@ namespace NexusVeloraBSR.BeatSaber
         [OnDisable]
         public void OnDisable()
         {
-            SceneManager.activeSceneChanged -= OnActiveSceneChanged;
+            if (_showOverlay) SceneManager.activeSceneChanged -= OnActiveSceneChanged;
             _cts?.Cancel();
             try { _worker?.Wait(1500); } catch { }
             _cts?.Dispose(); _cts = null; _worker = null;
@@ -62,6 +70,27 @@ namespace NexusVeloraBSR.BeatSaber
             else if (gameplay) _gameplayActive = true;
             _display.SetVisible(!_gameplayActive);
             Log?.Info($"NEXUS overlay scene='{name}' visible={!_gameplayActive}.");
+        }
+
+        private static bool ReadOverlaySetting()
+        {
+            try
+            {
+                var pluginDirectory = Path.GetDirectoryName(Assembly.GetExecutingAssembly().Location);
+                if (string.IsNullOrEmpty(pluginDirectory)) return false;
+                var path = Path.Combine(pluginDirectory, "NexusVeloraBSR.overlay.cfg");
+                if (!File.Exists(path)) return false;
+                foreach (var raw in File.ReadAllLines(path))
+                {
+                    var line = raw.Trim();
+                    if (line.StartsWith("#") || line.StartsWith(";")) continue;
+                    var parts = line.Split(new[] { '=' }, 2);
+                    if (parts.Length == 2 && parts[0].Trim().Equals("ShowOverlay", StringComparison.OrdinalIgnoreCase))
+                        return parts[1].Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
+                }
+            }
+            catch (Exception ex) { Log?.Warn("NEXUS overlay config error; disabled: " + ex.Message); }
+            return false;
         }
 
         private void RunOnUnityThread(Action action)
@@ -105,7 +134,7 @@ namespace NexusVeloraBSR.BeatSaber
                         Log?.Warn("NEXUS bridge disconnected; waiting for it to return. " + ex.Message);
                         bridgeConnected = false;
                     }
-                    RunOnUnityThread(() => _display.SetDisconnected());
+                    if (_showOverlay) RunOnUnityThread(() => _display.SetDisconnected());
                 }
                 try { await Task.Delay(1500, ct); } catch (TaskCanceledException) { }
             }
@@ -120,7 +149,7 @@ namespace NexusVeloraBSR.BeatSaber
 
             if (!first.Success)
             {
-                RunOnUnityThread(() => _display.SetConnected(string.Empty, string.Empty, string.Empty, 0));
+                if (_showOverlay) RunOnUnityThread(() => _display.SetConnected(string.Empty, string.Empty, string.Empty, 0));
                 if (_lastQueueSignature != "empty")
                 {
                     Log?.Info("NEXUS request queue is empty.");
@@ -136,7 +165,7 @@ namespace NexusVeloraBSR.BeatSaber
             if (signature == _lastQueueSignature) return;
 
             var count = Regex.Matches(json ?? string.Empty, "\\\"beatSaverKey\\\"\\s*:", RegexOptions.IgnoreCase).Count;
-            RunOnUnityThread(() => _display.SetConnected(song, key, requester, count));
+            if (_showOverlay) RunOnUnityThread(() => _display.SetConnected(song, key, requester, count));
             Log?.Info($"NEXUS NEXT REQUEST: {song} [{key}] requested by {requester}. Queue: {count}.");
             _lastQueueSignature = signature;
         }
