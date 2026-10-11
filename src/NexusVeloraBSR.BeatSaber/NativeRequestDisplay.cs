@@ -1,4 +1,5 @@
 using TMPro;
+using UnityEngine.UI;
 using UnityEngine;
 
 namespace NexusVeloraBSR.BeatSaber
@@ -7,10 +8,12 @@ namespace NexusVeloraBSR.BeatSaber
     {
         private GameObject? _root;
         private TextMeshProUGUI? _text;
+        private bool _visible = true;
         private string _message = "NEXUS VELORA BSR\nBridge: waiting...";
 
         public void SetVisible(bool visible)
         {
+            _visible = visible;
             if (_root != null) _root.SetActive(visible);
         }
 
@@ -25,12 +28,15 @@ namespace NexusVeloraBSR.BeatSaber
             canvas.sortingOrder = 32000;
 
             var rect = canvasObject.GetComponent<RectTransform>();
-            rect.anchorMin = new Vector2(0.5f, 1f);
-            rect.anchorMax = new Vector2(0.5f, 1f);
-            rect.pivot = new Vector2(0.5f, 1f);
-            rect.anchoredPosition = new Vector2(0f, -70f);
-            rect.sizeDelta = new Vector2(900f, 220f);
+            rect.anchorMin = new Vector2(1f, 1f);
+            rect.anchorMax = new Vector2(1f, 1f);
+            rect.pivot = new Vector2(1f, 1f);
+            rect.anchoredPosition = new Vector2(-35f, -130f);
+            rect.sizeDelta = new Vector2(440f, 165f);
             rect.localScale = Vector3.one;
+
+            var background = canvasObject.AddComponent<Image>();
+            background.color = new Color(0.025f, 0.04f, 0.085f, 0.88f);
 
             var textObject = new GameObject("NEXUS Request Text");
             textObject.transform.SetParent(canvasObject.transform, false);
@@ -38,10 +44,10 @@ namespace NexusVeloraBSR.BeatSaber
             var textRect = textObject.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
-            textRect.offsetMin = Vector2.zero;
-            textRect.offsetMax = Vector2.zero;
-            _text.alignment = TextAlignmentOptions.Center;
-            _text.fontSize = 34f;
+            textRect.offsetMin = new Vector2(18f, 12f);
+            textRect.offsetMax = new Vector2(-18f, -12f);
+            _text.alignment = TextAlignmentOptions.TopLeft;
+            _text.fontSize = 22f;
             _text.color = Color.white;
             // Legacy TextMeshPro API shared by Beat Saber 1.40.8 and 1.44.1.
 #pragma warning disable CS0618
@@ -50,14 +56,15 @@ namespace NexusVeloraBSR.BeatSaber
             _text.text = _message;
 
             _root = canvasObject;
+            _root.SetActive(_visible);
             Plugin.Log?.Info("NEXUS screen-space request display created.");
         }
 
         public void SetConnected(string song, string key, string requester, int count)
         {
             _message = count > 0
-                ? $"NEXUS VELORA BSR\nNEXT: {song} [{key}]\nRequested by: {requester}\nQueue: {count}"
-                : "NEXUS VELORA BSR\nBridge: CONNECTED\nQueue is empty.";
+                ? $"<color=#3FD9FF><b>NEXUS VELORA BSR</b></color>\nNEXT: {song} [{key}]\nBy: {requester}  |  Queue: {count}"
+                : "<color=#3FD9FF><b>NEXUS VELORA BSR</b></color>\nBridge: CONNECTED\nQueue is empty.";
             Apply();
         }
 
