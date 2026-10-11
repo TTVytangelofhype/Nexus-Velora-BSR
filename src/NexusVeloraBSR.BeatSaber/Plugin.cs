@@ -18,6 +18,7 @@ namespace NexusVeloraBSR.BeatSaber
         private string _lastQueueSignature = string.Empty;
         private readonly NativeRequestDisplay _display = new NativeRequestDisplay();
         private SynchronizationContext? _unityContext;
+        private bool _gameplayActive;
 
         [Init]
         public void Init(IPALogger logger) { Log = logger; logger.Info("NEXUS Velora BSR adapter initialized."); }
@@ -57,8 +58,10 @@ namespace NexusVeloraBSR.BeatSaber
                 (name.Equals("StandardGameplay", StringComparison.OrdinalIgnoreCase) ||
                  name.Equals("MultiplayerGameplay", StringComparison.OrdinalIgnoreCase) ||
                  name.IndexOf("GameplayCore", StringComparison.OrdinalIgnoreCase) >= 0);
-            _display.SetVisible(!gameplay);
-            Log?.Info($"NEXUS overlay scene='{name}' visible={!gameplay}.");
+            if (menu) _gameplayActive = false;
+            else if (gameplay) _gameplayActive = true;
+            _display.SetVisible(!_gameplayActive);
+            Log?.Info($"NEXUS overlay scene='{name}' visible={!_gameplayActive}.");
         }
 
         private void RunOnUnityThread(Action action)
