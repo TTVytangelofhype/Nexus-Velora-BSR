@@ -43,7 +43,10 @@ namespace NexusVeloraBSR.BeatSaber
             _text.alignment = TextAlignmentOptions.Center;
             _text.fontSize = 34f;
             _text.color = Color.white;
-            _text.textWrappingMode = TextWrappingModes.Normal;
+            // Legacy TextMeshPro API shared by Beat Saber 1.40.8 and 1.44.1.
+#pragma warning disable CS0618
+            _text.enableWordWrapping = true;
+#pragma warning restore CS0618
             _text.text = _message;
 
             _root = canvasObject;
