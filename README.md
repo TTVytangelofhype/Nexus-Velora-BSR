@@ -2,14 +2,14 @@
 
 **Velora chat song requests for Beat Saber 1.40.8 and 1.44.1**, powered by BeatSaver and SongCore.
 
-> **Development status:** v0.1.0 — working bridge and tested 1.44.1 adapter; 1.40.8 compatibility is being tested. Not a final public release.
+> **Development status:** v0.1.0 — working bridge and tested 1.44.1 adapter; 1.40.8 and 1.44.1 request/refresh tested. Not a final public release.
 
 ## Supported / planned Beat Saber versions
 
 | Beat Saber version | Status |
 | --- | --- |
-| **1.44.1 (BSManager legacy)** | Bridge, downloads and live SongCore refresh tested; native request overlay experimental |
-| **1.40.8 (BSManager legacy)** | Build/install profile available; requires compilation and in-game testing |
+| **1.44.1 (BSManager legacy)** | Bridge, downloads and live SongCore refresh tested; native request overlay optional (off by default) |
+| **1.40.8 (BSManager legacy)** | Bridge, downloads and SongCore refresh acknowledgement tested; overlay optional |
 | 1.42.1 | Preserved compatibility target, **not verified** |
 | Latest | Separate experimental profile, **not verified** |
 
@@ -32,6 +32,18 @@ Requires the **.NET SDK** for source builds and running the development bridge. 
 
 For 1.44.1 use `stable-1.44.1` and the corresponding `1.44.1` directory. A failed build leaves the existing game plugin unchanged.
 
+## Optional in-game panel (disabled by default)
+
+The in-game panel is **not required** for chat requests, map downloads, or SongCore refreshes. Both supported versions run normally without it.
+
+To opt in, create a plain text file at `<Beat Saber instance>\\Plugins\\NexusVeloraBSR.overlay.cfg` with:
+
+```ini
+ShowOverlay=true
+```
+
+Restart Beat Saber to apply the setting. Set `ShowOverlay=false` or delete the file to disable the panel again. This is a **per-version** setting: 1.40.8 and 1.44.1 can be configured independently. No rebuild is needed when changing it.
+
 ## Viewer commands
 
 - `!bsr <BeatSaver ID or song>` — request a map
@@ -46,7 +58,7 @@ For 1.44.1 use `stable-1.44.1` and the corresponding `1.44.1` directory. A faile
 
 ## What currently works
 
-The Velora listener polls new chat messages, resolves BeatSaver requests, enforces queue limits, downloads accepted maps to the configured Beat Saber instance and signals the SongCore adapter to refresh custom songs. The 1.44.1 adapter has been tested in-game. A native NEXUS queue overlay is in development; its placement and menu/gameplay visibility are still being refined. The bridge logs replies locally; it does **not** yet post responses back into Velora chat.
+The Velora listener polls new chat messages, resolves BeatSaver requests, enforces queue limits, downloads accepted maps to the configured Beat Saber instance and signals the SongCore adapter to refresh custom songs. The 1.44.1 adapter has been tested in-game. The optional native overlay is disabled by default, and its visual layout remains experimental. The bridge logs replies locally; it does **not** yet post responses back into Velora chat.
 
 The bridge listens on `http://127.0.0.1:24842` and exposes development endpoints such as `/api/status` and `/api/queue`.
 
