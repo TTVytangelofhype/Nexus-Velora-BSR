@@ -39,13 +39,13 @@ namespace NexusVeloraBSR.BeatSaber
             {
                 var go = new GameObject(i == 0 ? "Velora Header" : "Velora Message " + i);
                 go.transform.SetParent(_root.transform, false);
-                go.transform.localPosition = new Vector3(0f, -i * 0.115f, 0f);
+                go.transform.localPosition = new Vector3(0f, -i * 0.18f, 0f);
                 go.transform.localRotation = Quaternion.identity;
                 var tmp = go.AddComponent<TextMeshPro>();
                 tmp.font = _font;
-                tmp.fontSize = i == 0 ? 2.4f : 2.1f;
-                tmp.rectTransform.sizeDelta = new Vector2(17f, 1.05f);
-                tmp.rectTransform.localScale = Vector3.one * 0.1f;
+                tmp.fontSize = i == 0 ? 3.2f : 3.0f;
+                tmp.rectTransform.sizeDelta = new Vector2(17f, 1.5f);
+                tmp.rectTransform.localScale = Vector3.one * 0.15f;
                 tmp.alignment = TextAlignmentOptions.TopLeft;
                 tmp.color = Color.white;
                 tmp.richText = true;
@@ -67,12 +67,12 @@ namespace NexusVeloraBSR.BeatSaber
             var head = Camera.main;
             if (head != null)
             {
-                _root.transform.position = head.transform.TransformPoint(new Vector3(-2.05f, 0.45f, 2.7f));
+                _root.transform.position = head.transform.TransformPoint(new Vector3(-1.35f, 0.28f, 2.35f));
                 _root.transform.rotation = Quaternion.Euler(0f, head.transform.eulerAngles.y, 0f);
             }
             else
             {
-                _root.transform.position = new Vector3(-2.4f, 2.35f, 2.8f);
+                _root.transform.position = new Vector3(-1.5f, 2.1f, 2.5f);
                 _root.transform.rotation = Quaternion.identity;
             }
         }
