@@ -44,6 +44,22 @@ ShowOverlay=true
 
 Restart Beat Saber to apply the setting. Set `ShowOverlay=false` or delete the file to disable the panel again. This is a **per-version** setting: 1.40.8 and 1.44.1 can be configured independently. No rebuild is needed when changing it.
 
+## Optional Velora live chat in VR (experimental)
+
+The **VR-only Velora chat panel** is disabled by default on **1.40.8** and **1.44.1**. It uses a world-space Unity canvas, not an OBS or desktop overlay. It shows up to eight recent chat messages and does not replay old messages when the bridge first connects. The chat feed is memory-only and limited to 30 messages. This is an experimental first implementation; VR placement and visibility must be verified in-game.
+
+In the same per-instance file `<Beat Saber instance>\\Plugins\\NexusVeloraBSR.overlay.cfg`, add:
+
+```ini
+ShowOverlay=false
+ShowVeloraChat=true
+ChatDuringSongs=false
+```
+
+Restart Beat Saber after changing settings. `ShowVeloraChat=false` or removing the setting disables the chat box (the default). Set `ChatDuringSongs=true` to leave the panel visible during gameplay. The old song-request panel (`ShowOverlay`) is independent and remains disabled by default.
+
+Start the bridge as usual; `GET http://127.0.0.1:24842/api/velora/chat` provides the bounded chat feed. The bridge must be restarted to use this endpoint after updating. Existing `!bsr` commands, downloads and SongCore refresh remain separate.
+
 ## Viewer commands
 
 - `!bsr <BeatSaver ID or song>` — request a map
