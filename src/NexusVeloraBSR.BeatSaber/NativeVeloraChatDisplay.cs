@@ -17,21 +17,31 @@ namespace NexusVeloraBSR.BeatSaber
         public void EnsureCreated()
         {
             if (_root != null) return;
-            _root = new GameObject("NEXUS Velora VR Chat");
+            _root = new GameObject("NEXUS Velora VR Chat", typeof(RectTransform));
             UnityEngine.Object.DontDestroyOnLoad(_root);
             var canvas = _root.AddComponent<Canvas>();
             canvas.renderMode = RenderMode.WorldSpace;
+            canvas.sortingOrder = 500;
             var rect = _root.GetComponent<RectTransform>();
             rect.sizeDelta = new Vector2(700f, 270f);
             // Compact Twitch-style chat strip at the upper-left of the VR menu.
             _root.transform.position = new Vector3(-1.65f, 2.35f, 2.65f);
             _root.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
             _root.transform.localScale = Vector3.one * 0.002f;
-            var background = _root.AddComponent<Image>();
+            var backgroundObject = new GameObject("Dark Chat Background", typeof(RectTransform));
+            backgroundObject.transform.SetParent(_root.transform, false);
+            var backgroundRect = backgroundObject.GetComponent<RectTransform>();
+            backgroundRect.anchorMin = Vector2.zero;
+            backgroundRect.anchorMax = Vector2.one;
+            backgroundRect.offsetMin = Vector2.zero;
+            backgroundRect.offsetMax = Vector2.zero;
+            var background = backgroundObject.AddComponent<Image>();
+            background.raycastTarget = false;
             background.color = new Color(0.015f, 0.018f, 0.028f, 0.72f);
             var textObject = new GameObject("Chat Lines");
             textObject.transform.SetParent(_root.transform, false);
             _text = textObject.AddComponent<TextMeshProUGUI>();
+            _text.raycastTarget = false;
             var textRect = textObject.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
