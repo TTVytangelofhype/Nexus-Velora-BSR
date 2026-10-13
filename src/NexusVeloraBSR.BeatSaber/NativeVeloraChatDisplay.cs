@@ -25,8 +25,17 @@ namespace NexusVeloraBSR.BeatSaber
             var rect = _root.GetComponent<RectTransform>();
             rect.sizeDelta = new Vector2(700f, 270f);
             // Compact Twitch-style chat strip at the upper-left of the VR menu.
-            _root.transform.position = new Vector3(-1.65f, 2.35f, 2.65f);
-            _root.transform.rotation = Quaternion.Euler(0f, 180f, 0f);
+            var head = Camera.main;
+            if (head != null)
+            {
+                _root.transform.position = head.transform.TransformPoint(new Vector3(-1.1f, 0.35f, 2.2f));
+                _root.transform.rotation = head.transform.rotation;
+            }
+            else
+            {
+                _root.transform.position = new Vector3(-1.65f, 2.35f, 2.65f);
+                _root.transform.rotation = Quaternion.identity;
+            }
             _root.transform.localScale = Vector3.one * 0.002f;
             var backgroundObject = new GameObject("Dark Chat Background", typeof(RectTransform));
             backgroundObject.transform.SetParent(_root.transform, false);
@@ -38,10 +47,18 @@ namespace NexusVeloraBSR.BeatSaber
             var background = backgroundObject.AddComponent<Image>();
             background.raycastTarget = false;
             background.color = new Color(0.015f, 0.018f, 0.028f, 0.72f);
-            var textObject = new GameObject("Chat Lines");
+            var textObject = new GameObject("Chat Lines", typeof(RectTransform));
             textObject.transform.SetParent(_root.transform, false);
             _text = textObject.AddComponent<TextMeshProUGUI>();
             _text.raycastTarget = false;
+            var font = TMP_Settings.defaultFontAsset;
+            if (font == null)
+            {
+                var availableFonts = Resources.FindObjectsOfTypeAll<TMP_FontAsset>();
+                if (availableFonts.Length > 0) font = availableFonts[0];
+            }
+            if (font != null) _text.font = font;
+            else Plugin.Log?.Warn("NEXUS VR chat: no TMP font asset available.");
             var textRect = textObject.GetComponent<RectTransform>();
             textRect.anchorMin = Vector2.zero;
             textRect.anchorMax = Vector2.one;
