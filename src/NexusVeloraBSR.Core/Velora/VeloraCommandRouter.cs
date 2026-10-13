@@ -71,6 +71,16 @@ namespace NexusVeloraBSR.Core.Velora
 
             switch (command.Type)
             {
+                case CommandType.SetLimit:
+                    if (!int.TryParse(command.Argument, out var perUser) || perUser < 1 || perUser > 100)
+                        return "Usage: !setlimit <1-100> (maximum queued songs per viewer).";
+                    _queue.MaxRequestsPerUser = perUser;
+                    return $"NEXUS viewer request limit set to {perUser}.";
+                case CommandType.SetQueue:
+                    if (!int.TryParse(command.Argument, out var queueSize) || queueSize < 1 || queueSize > 1000)
+                        return "Usage: !setqueue <1-1000> (maximum total queued songs).";
+                    _queue.MaxQueueSize = queueSize;
+                    return $"NEXUS total queue limit set to {queueSize}.";
                 case CommandType.Open: _queue.Open(); return "NEXUS song requests are OPEN.";
                 case CommandType.Close: _queue.Close(); return "NEXUS song requests are CLOSED.";
                 case CommandType.Skip:
