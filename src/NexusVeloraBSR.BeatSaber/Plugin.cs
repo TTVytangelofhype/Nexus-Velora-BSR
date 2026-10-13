@@ -22,6 +22,10 @@ namespace NexusVeloraBSR.BeatSaber
         private SynchronizationContext? _unityContext;
         private bool _gameplayActive;
         private bool _showOverlay;
+        private bool _showChat;
+        private bool _chatDuringSongs;
+        private readonly NativeVeloraChatDisplay _chatDisplay = new NativeVeloraChatDisplay();
+        private string _lastChatPayload = string.Empty;
 
         [Init]
         public void Init(IPALogger logger) { Log = logger; logger.Info("NEXUS Velora BSR adapter initialized."); }
@@ -30,14 +34,23 @@ namespace NexusVeloraBSR.BeatSaber
         public void OnEnable()
         {
             _unityContext = SynchronizationContext.Current;
-            _showOverlay = ReadOverlaySetting();
+            _showOverlay = ReadOverlaySetting("ShowOverlay");
+            _showChat = ReadOverlaySetting("ShowVeloraChat");
+            _chatDuringSongs = ReadOverlaySetting("ChatDuringSongs");
             if (_showOverlay)
             {
                 _display.EnsureCreated();
                 SceneManager.activeSceneChanged += OnActiveSceneChanged;
                 UpdateOverlayForScene(SceneManager.GetActiveScene());
             }
-            Log?.Info("NEXUS in-game overlay " + (_showOverlay ? "enabled" : "disabled (default)") + ".");
+            if (_showChat)
+            {
+                _chatDisplay.EnsureCreated();
+                if (!_showOverlay) SceneManager.activeSceneChanged += OnActiveSceneChanged;
+                UpdateOverlayForScene(SceneManager.GetActiveScene());
+            }
+            Log?.Info("NEXUS VR chat " + (_showChat ? "enabled" : "disabled (default)") + ".");
+            Log?.Info("NEXUS in-game overlay "  + (_showOverlay ? "enabled" : "disabled (default)") + ".");
             _cts = new CancellationTokenSource();
             _worker = Task.Run(() => BridgeLoopAsync(_cts.Token));
         }
@@ -45,7 +58,8 @@ namespace NexusVeloraBSR.BeatSaber
         [OnDisable]
         public void OnDisable()
         {
-            if (_showOverlay) SceneManager.activeSceneChanged -= OnActiveSceneChanged;
+            if (_showOverlay || _showChat) SceneManager.activeSceneChanged -= OnActiveSceneChanged;
+            if (_showChat) _chatDisplay.Destroy();
             _cts?.Cancel();
             try { _worker?.Wait(1500); } catch { }
             _cts?.Dispose(); _cts = null; _worker = null;
@@ -68,11 +82,12 @@ namespace NexusVeloraBSR.BeatSaber
                  name.IndexOf("GameplayCore", StringComparison.OrdinalIgnoreCase) >= 0);
             if (menu) _gameplayActive = false;
             else if (gameplay) _gameplayActive = true;
-            _display.SetVisible(!_gameplayActive);
+            if (_showOverlay) _display.SetVisible(!_gameplayActive);
+            if (_showChat) _chatDisplay.SetVisible(_chatDuringSongs || !_gameplayActive);
             Log?.Info($"NEXUS overlay scene='{name}' visible={!_gameplayActive}.");
         }
 
-        private static bool ReadOverlaySetting()
+        private static bool ReadOverlaySetting(string setting)
         {
             try
             {
@@ -85,7 +100,7 @@ namespace NexusVeloraBSR.BeatSaber
                     var line = raw.Trim();
                     if (line.StartsWith("#") || line.StartsWith(";")) continue;
                     var parts = line.Split(new[] { '=' }, 2);
-                    if (parts.Length == 2 && parts[0].Trim().Equals("ShowOverlay", StringComparison.OrdinalIgnoreCase))
+                    if (parts.Length == 2 && parts[0].Trim().Equals(setting, StringComparison.OrdinalIgnoreCase))
                         return parts[1].Trim().Equals("true", StringComparison.OrdinalIgnoreCase);
                 }
             }
@@ -126,6 +141,7 @@ namespace NexusVeloraBSR.BeatSaber
                     }
 
                     await UpdateQueueStatusAsync(client);
+                    if (_showChat) await UpdateVeloraChatAsync(client);
                 }
                 catch (Exception ex)
                 {
@@ -138,6 +154,38 @@ namespace NexusVeloraBSR.BeatSaber
                 }
                 try { await Task.Delay(1500, ct); } catch (TaskCanceledException) { }
             }
+        }
+
+        private async Task UpdateVeloraChatAsync(HttpClient client)
+        {
+            try
+            {
+                var json = await client.GetStringAsync("api/velora/chat");
+                if (json == _lastChatPayload) return;
+                _lastChatPayload = json;
+                var lines = new System.Collections.Generic.List<string>();
+                // JSON string values may contain escaped quotes; match only the known feed schema.
+                var entries = Regex.Matches(json,
+                    @"\{\s*""id""\s*:\s*\d+\s*,\s*""user""\s*:\s*""(?<user>(?:\\.|[^""\\])*)""\s*,\s*""text""\s*:\s*""(?<text>(?:\\.|[^""\\])*)""\s*\}",
+                    RegexOptions.IgnoreCase);
+                foreach (Match entry in entries)
+                {
+                    var user = DecodeJsonString(entry.Groups["user"].Value);
+                    var message = DecodeJsonString(entry.Groups["text"].Value);
+                    lines.Add(user + ": " + message);
+                }
+                RunOnUnityThread(() => _chatDisplay.UpdateLines(lines));
+            }
+            catch (Exception ex)
+            {
+                Log?.Warn("NEXUS VR chat fetch failed: " + ex.Message);
+            }
+        }
+
+        private static string DecodeJsonString(string value)
+        {
+            // Basic JSON escape handling for text-only display.
+            return Regex.Unescape(value).Replace("\\/", "/");
         }
 
         private async Task UpdateQueueStatusAsync(HttpClient client)
