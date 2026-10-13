@@ -1,6 +1,6 @@
 namespace NexusVeloraBSR.Core.Commands
 {
-    public enum CommandType { None, Request, Queue, Undo, Help, Open, Close, Skip, Remove, Clear, Block }
+    public enum CommandType { None, Request, Queue, Undo, Help, Open, Close, Skip, Remove, Clear, Block, SetLimit, SetQueue }
 
     public sealed class ParsedCommand
     {
@@ -27,6 +27,8 @@ namespace NexusVeloraBSR.Core.Commands
                 case "!skip": return new ParsedCommand { Type = CommandType.Skip };
                 case "!remove": return new ParsedCommand { Type = CommandType.Remove, Argument = arg };
                 case "!clearqueue": return new ParsedCommand { Type = CommandType.Clear };
+                case "!setlimit": return new ParsedCommand { Type = CommandType.SetLimit, Argument = arg };
+                case "!setqueue": return new ParsedCommand { Type = CommandType.SetQueue, Argument = arg };
                 case "!block": return new ParsedCommand { Type = CommandType.Block, Argument = arg };
                 default: return new ParsedCommand();
             }
