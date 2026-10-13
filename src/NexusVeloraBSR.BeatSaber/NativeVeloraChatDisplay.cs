@@ -5,9 +5,8 @@ using UnityEngine;
 
 namespace NexusVeloraBSR.BeatSaber
 {
-    // Inspired by BeatSaberPlus' floating-chat layout: independent world-space
-    // message rows, bounded history, consistent fonts, and side-mounted placement.
-    // Uses no Unity UI Canvas/Image or BeatSaberPlus runtime dependencies.
+    // NEXUS world-space chat: individual message rows, bounded history,
+    // consistent fonts and side-mounted placement. No UI Canvas/Image required.
     internal sealed class NativeVeloraChatDisplay
     {
         private GameObject? _root;
