@@ -6,6 +6,7 @@
     <Compile Include="Plugin.cs" />
     <Compile Include="PendingRefresh.cs" />
     <Compile Include="NativeRequestDisplay.cs" />
+    <Compile Include="NativeVeloraChatDisplay.cs" />
     <EmbeddedResource Include="$(NexusManifestPath)" Condition="'$(NexusManifestPath)' != ''" />
     <EmbeddedResource Include="manifest.json" Condition="'$(NexusManifestPath)' == ''" />
     <Reference Include="System.Net.Http" />
