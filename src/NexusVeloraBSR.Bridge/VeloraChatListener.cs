@@ -9,16 +9,18 @@ public sealed class VeloraChatListener : BackgroundService
     private readonly VeloraCommandRouter _router;
     private readonly ILogger<VeloraChatListener> _log;
     private readonly IConfiguration _config;
+    private readonly VeloraChatFeed _feed;
     private readonly HashSet<string> _seen = new(StringComparer.Ordinal);
     private bool _primed;
     private string? _channelId;
 
-    public VeloraChatListener(IHttpClientFactory clients, VeloraCommandRouter router, ILogger<VeloraChatListener> log, IConfiguration config)
+    public VeloraChatListener(IHttpClientFactory clients, VeloraCommandRouter router, ILogger<VeloraChatListener> log, IConfiguration config, VeloraChatFeed feed)
     {
         _clients = clients;
         _router = router;
         _log = log;
         _config = config;
+        _feed = feed;
     }
 
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
@@ -115,6 +117,7 @@ public sealed class VeloraChatListener : BackgroundService
         foreach (var entry in batch)
         {
             if (!Remember(entry.Id)) continue;
+            _feed.Add(entry.Message.UserName, entry.Message.Text);
             if (!entry.Message.Text.TrimStart().StartsWith("!", StringComparison.Ordinal)) continue;
 
             _log.LogInformation("{User}: {Message}", entry.Message.UserName, entry.Message.Text);
