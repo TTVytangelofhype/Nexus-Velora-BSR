@@ -46,7 +46,7 @@ Restart Beat Saber to apply the setting. Set `ShowOverlay=false` or delete the f
 
 ## Optional Velora live chat in VR (experimental)
 
-The **VR-only Velora chat panel** (BeatSaberPlus-inspired floating message rows, without a BeatSaberPlus dependency) is disabled by default on **1.40.8** and **1.44.1**. It uses independent world-space TextMeshPro message rows without a Unity UI Canvas or Image, not an OBS or desktop overlay. This experimental version intentionally has no background rectangle to avoid the white-box rendering issue. It shows up to eight recent chat messages and does not replay old messages when the bridge first connects. The chat feed is memory-only and limited to 30 messages. This is an experimental first implementation; VR placement and visibility must be verified in-game.
+The **VR-only Velora chat panel** is disabled by default on **1.40.8** and **1.44.1**. It uses independent world-space TextMeshPro message rows without a Unity UI Canvas or Image, not an OBS or desktop overlay. This experimental version intentionally has no background rectangle to avoid the white-box rendering issue. It shows up to eight recent chat messages and does not replay old messages when the bridge first connects. The chat feed is memory-only and limited to 30 messages. This is an experimental first implementation; VR placement and visibility must be verified in-game.
 
 In the same per-instance file `<Beat Saber instance>\\Plugins\\NexusVeloraBSR.overlay.cfg`, add:
 
@@ -99,4 +99,4 @@ Map downloads are enabled by default in the bridge configuration. Requests are s
 
 ### VR chat implementation note
 
-The chat presentation is inspired by [HardCPP BeatSaberPlus](https://github.com/hardcpp/BeatSaberPlus) floating chat principles (individual messages, bounded display, explicit font, off-centre placement), but **does not copy its UI code or require its SDK**. The bridge remains the Velora data source; `!bsr` and SongCore refresh are unchanged. Verify the panel in 1.40.8 and 1.44.1 before release.
+NEXUS Velora Chat uses individual world-space text rows, bounded message history, and a dedicated font fallback. It does not require any third-party chat plugin. The Velora bridge remains the message source; `!bsr` and SongCore refresh are unchanged. Test the VR chat panel on 1.40.8 and 1.44.1 before release.
