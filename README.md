@@ -70,6 +70,8 @@ Start the bridge as usual; `GET http://127.0.0.1:24842/api/velora/chat` provides
 ## Streamer / moderator commands
 
 - `!open`, `!close`, `!skip`, `!remove <ID or position>`, `!clearqueue`
+- `!setlimit <1-100>` — set the maximum number of waiting requests per viewer, e.g. `!setlimit 3`
+- `!setqueue <1-1000>` — set the maximum total queue length, e.g. `!setqueue 30`
 - `!block <ID>` — planned; not fully implemented
 
 ## What currently works
@@ -77,6 +79,17 @@ Start the bridge as usual; `GET http://127.0.0.1:24842/api/velora/chat` provides
 The Velora listener polls new chat messages, resolves BeatSaver requests, enforces queue limits, downloads accepted maps to the configured Beat Saber instance and signals the SongCore adapter to refresh custom songs. The 1.44.1 adapter has been tested in-game. The optional native overlay is disabled by default, and its visual layout remains experimental. The bridge logs replies locally; it does **not** yet post responses back into Velora chat.
 
 The bridge listens on `http://127.0.0.1:24842` and exposes development endpoints such as `/api/status` and `/api/queue`.
+
+## Song queue limits
+
+The streamer can configure limits in `src/NexusVeloraBSR.Bridge/appsettings.json` under `NexusVeloraBSR`:
+
+```json
+"MaxQueueSize": 50,
+"MaxRequestsPerUser": 2
+```
+
+Restart the bridge after editing this file. Alternatively, the streamer or a moderator can change either limit **live** through Velora chat with `!setqueue 30` and `!setlimit 3`. Live changes take effect immediately for new requests, do not remove existing queued songs, and **reset to the configured values when the bridge restarts**. A viewer reaching their per-user limit cannot add another song until one of their waiting requests is removed or dequeued. The overall queue limit applies to all viewers combined. The bridge currently logs command responses locally rather than posting them back to Velora chat.
 
 ## Configuration and safety
 
