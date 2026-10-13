@@ -8,6 +8,7 @@ var builder = WebApplication.CreateBuilder(args);
 builder.WebHost.UseUrls("http://127.0.0.1:24842");
 
 builder.Services.AddSingleton<RequestQueue>();
+builder.Services.AddSingleton<VeloraChatFeed>();
 builder.Services.AddSingleton<BeatSaverClient>();
 builder.Services.AddSingleton<VeloraCommandRouter>();
 builder.Services.AddSingleton<IAcceptedMapHandler, AcceptedMapHandler>();
@@ -55,6 +56,7 @@ app.MapGet("/api/status", (RequestQueue queue) => Results.Ok(new
 }));
 
 app.MapGet("/api/queue", (RequestQueue queue) => Results.Ok(queue.Items));
+app.MapGet("/api/velora/chat", (VeloraChatFeed feed) => Results.Ok(feed.Snapshot()));
 
 app.MapGet("/api/beatsaber", (BeatSaberMapInstaller installer) =>
 {
